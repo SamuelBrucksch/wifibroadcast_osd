@@ -24,6 +24,9 @@ int mid_x, mid_y;
 //positioning of objects, could be exchanged with configurable interface later
 int ARROW_X = 0;
 int ARROW_Y = 0;
+#define VOLT_X 90
+#define VOLT_Y 50
+
 
 //Demo values used for simulations
 int asc = 1;
@@ -63,14 +66,14 @@ void paintArrow(int heading){
 
 
 
-void paintVolt(double v){
+void paintVolt(double v, int x, int y){
 	//TODO font stroke
 	sprintf(buffer, "%0.2fV", v);
 	
-	float width = TextWidth(buffer, SerifTypeface, 28);
+	float width = TextWidth(buffer, SansTypeface, 28);
 	Fill(75,75,75,0.5);
 	StrokeWidth(0);
-	Rect(88,48, width , 32);
+	Rect(x-2,y-2, width+2 , 32);
 	
 	if (volt/CELLS > CELL_MAX-((CELL_MAX-CELL_MIN)/3)){
 		Fill(0x0,0xff,0x0,1);
@@ -79,7 +82,7 @@ void paintVolt(double v){
 	}else{
 		Fill(255, 0,0,1);
 	}
-	Text(90, 50, buffer, SansTypeface, 28);
+	Text(x, y, buffer, SansTypeface, 28);
 }
 
 void paintAHI(int hor_angle, int ver_angle){
@@ -114,7 +117,7 @@ int main() {
 		
 		Start(width, height);
 
-		paintVolt(volt);
+		paintVolt(volt, VOLT_X, VOLT_Y);
 		paintAHI(hor_angle, ver_angle);
 		paintArrow(heading++);
 		End();
