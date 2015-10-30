@@ -19,6 +19,7 @@ int mid_x, mid_y;
 #define CELLS 3
 #define CELL_MAX 4.20
 #define CELL_MIN 3.00
+#define DRAW_FPS 25
 
 //positioning of objects, could be exchanged with configurable interface later
 int ARROW_X = 0;
@@ -118,8 +119,7 @@ int main() {
 		paintArrow(heading++);
 		End();
     
-    		//25fps
-    		usleep(1000/25*1000);
+    		
     		if (asc){
 			hor_angle++;
 			ver_angle++;
@@ -129,13 +129,12 @@ int main() {
 		}
 		volt -= 0.01;
 	
-	
-	
 		if (hor_angle == 30){
 			asc=0;
 		}else if (hor_angle == -30){
 			asc = 1;
 		}
+		usleep(1000/DRAW_FPS*1000);
 	}
 }
 
