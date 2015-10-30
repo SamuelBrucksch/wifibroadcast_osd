@@ -12,32 +12,33 @@
 #include <EGL/eglext.h>
 #include <stdio.h>
 
-
+//display size
+int width, height;
+int mid_x, mid_y;
 
 #define CELLS 3
 #define CELL_MAX 4.20
 #define CELL_MIN 3.00
 
+//positioning of objects, could be exchanged with configurable interface later
 int ARROW_X = 0;
 int ARROW_Y = 0;
 
-int width, height;
-
-int mid_x;
-int mid_y;
-
+//Demo values used for simulations
+int asc = 1;
+int hor_angle = -30;
+int ver_angle = -30;
 double volt = 12.6d;
 char buffer[50];
 int heading = 0;
 
-int tmp_x=0;
+int tmp_x = 0;
 int tmp_y = 0;
-int i =0;
-RotatePoints(VGfloat *x, VGfloat *y, double angle, int points, int center_x, int center_y){
-	
+RotatePoints(float *x, float *y, float angle, int points, int center_x, int center_y){
 	double cosAngle = cos(-angle);
 	double sinAngle = sin(-angle);
 
+	int i = 0;
 	for (i=0; i < points; i++){
 		tmp_x = center_x + (x[i]-center_x)*cosAngle-(y[i]-center_y)*sinAngle;
 		tmp_y = center_y + (x[i]-center_x)*sinAngle + (y[i] - center_y)*cosAngle;
@@ -48,13 +49,13 @@ RotatePoints(VGfloat *x, VGfloat *y, double angle, int points, int center_x, int
 
 void paintArrow(int heading){
 	if (heading == 360) heading = 0;
-	VGfloat x[8] = {10+ARROW_X, 10+ARROW_X, 0+ARROW_X, 20+ARROW_X, 40+ARROW_X, 30+ARROW_X, 30+ARROW_X, 10+ARROW_X};
-	VGfloat y[8] = {0+ARROW_Y, 20+ARROW_Y, 20+ARROW_Y, 40+ARROW_Y, 20+ARROW_Y,20+ARROW_Y,0+ARROW_Y,0+ARROW_Y};
+	float x[8] = {10+ARROW_X, 10+ARROW_X, 0+ARROW_X, 20+ARROW_X, 40+ARROW_X, 30+ARROW_X, 30+ARROW_X, 10+ARROW_X};
+	float y[8] = {0+ARROW_Y, 20+ARROW_Y, 20+ARROW_Y, 40+ARROW_Y, 20+ARROW_Y,20+ARROW_Y,0+ARROW_Y,0+ARROW_Y};
 	Fill(0xff,0xff,0xff,1);
 	Stroke(0,0,0,1);
 	StrokeWidth(2);
 	
-	RotatePoints(x, y, heading * M_PI / 180.0d, 8, ARROW_X+20,ARROW_Y+20);
+	RotatePoints(x, y, heading * M_PI / 180.0f, 8, ARROW_X+20,ARROW_Y+20);
 	Polygon(x, y, 8);
 	Polyline(x, y, 8);
 }
@@ -65,7 +66,7 @@ void paintVolt(double v){
 	//TODO font stroke
 	sprintf(buffer, "%0.2fV", v);
 	
-	VGfloat width = TextWidth(buffer, SerifTypeface, 28);
+	float width = TextWidth(buffer, SerifTypeface, 28);
 	Fill(75,75,75,0.5);
 	StrokeWidth(0);
 	Rect(88,48, width , 32);
@@ -97,62 +98,45 @@ void paintAHI(int hor_angle, int ver_angle){
 	Line(mid_x - offset_x,mid_y - offset_y, mid_x + offset_x, mid_y + offset_y);
 }
 
-int asc = 1;
-
-
 int main() {
-	char s[3];
-	Fill(0,0,0,0);
-    init(&width, &height);                  // Graphics initialization
+	// Graphics initialization
+	init(&width, &height);
+	
 	mid_x = width/2;
 	mid_y = height/2;
-	
+
+	//TODO configurable position of drawn objects
 	ARROW_X = mid_x -20;
-	ARROW_Y = height -100;
-	
-	int hor_angle = -30;
-	int ver_angle = -30;
+	ARROW_Y = mid_y -100;
 	
 	while (1){
 		
-	Start(width, height);
+		Start(width, height);
 
-	paintVolt(volt);
-	paintAHI(hor_angle, ver_angle);
-	paintArrow(heading++);
-	
-
-
+		paintVolt(volt);
+		paintAHI(hor_angle, ver_angle);
+		paintArrow(heading++);
+		End();
     
-    End();
-    
-    //25fps
-    usleep(1000/25*1000);
-    if (asc){
-		hor_angle++;
-		ver_angle++;
-	}else{
-		hor_angle--;
-		ver_angle--;
+    		//25fps
+    		usleep(1000/25*1000);
+    		if (asc){
+			hor_angle++;
+			ver_angle++;
+		}else{
+			hor_angle--;
+			ver_angle--;
+		}
+		volt -= 0.01;
+	
+	
+	
+		if (hor_angle == 30){
+			asc=0;
+		}else if (hor_angle == -30){
+			asc = 1;
+		}
 	}
-	volt -= 0.01;
-	
-	
-	
-	if (hor_angle == 30){
-		asc=0;
-	}else if (hor_angle == -30){
-		asc = 1;
-	}
-	}
-	
-	                                  // End the picture
-
-	//vgClear(0,0,width,height);
-
-    fgets(s, 2, stdin);                     // look at the pic, end with [RETURN]
-    finish();                               // Graphics cleanup
-    exit(0);
 }
 
 
