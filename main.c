@@ -107,7 +107,7 @@ int main() {
 
 	//TODO configurable position of drawn objects
 	ARROW_X = mid_x -20;
-	ARROW_Y = mid_y -100;
+	ARROW_Y = height -100;
 	
 	while (1){
 		
