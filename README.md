@@ -10,7 +10,7 @@ This project uses the openvg library to draw 2d objects onto the screen. It is a
 sudo raspi-config
 ```
 In advanced -> Memory Split -> 128MB
-```
+
 
 2. install requirements for openvg
 ```
