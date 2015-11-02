@@ -4,7 +4,7 @@ OSD for HD wireless FPV system based on wifibroadcast from befi
 This project uses the openvg library to draw 2d objects onto the screen. It is an OSD that uses the telemetry of already existing systems like mavlink, frsky direct GPS and so on.
 
 # Possible issues
-1) The AHI might indicate the opposite direction. This can be fixed by changing this part
+1) The AHI might indicate the opposite direction. This can be fixed by changing this part in render.c
 ```
 paintAHI(180.0f / M_PI * (atan(x_val / sqrt((y_val*y_val) + (z_val*z_val)))), 180.0f/M_PI * (atan(y_val/sqrt((x_val*x_val)+(z_val*z_val)))));
 ```
