@@ -49,8 +49,12 @@ void render(telemetry_data_t *td) {
 
 	//TODO calculate distance to home
 	//paintHomeDist(500, width/2, VOLT_Y);
+	
+	//we assume that if we get the NS and EW values from frsky protocol, that we have a fix
+	if ((td->ew == 'E' || td->ew == 'W') && (td->ns == 'N' || td->ns == 'S')){
+		paintCoordinates((td->ns == 'N'? 1:-1) * td->latitude, (td->ew == 'E'? 1:-1) * td->longitude, width - 100, VOLT_Y + FONT_SIZE + 2);
+	}
 
-	paintCoordinates(td->latitude, td->longitude,  width - 100, VOLT_Y + FONT_SIZE + 2);
 
 	//TODO 0,0 is just a placeholder for configurable position later
 	//TODO exchange heading with home arrow
@@ -159,7 +163,6 @@ void paintCoordinates(double lat, double lon, int pos_x, int pos_y){
 	Fill(0xff,0xff,0xff,0.5);
 	StrokeWidth(0);
 	Rect(pos_x-width,pos_y-2, width+2 , FONT_SIZE + 4);
-
 	Fill(0,0,0,1);
 	TextEnd(pos_x, pos_y , buffer, SansTypeface, FONT_SIZE);
 
@@ -168,7 +171,6 @@ void paintCoordinates(double lat, double lon, int pos_x, int pos_y){
 	Fill(0xff,0xff,0xff,0.5);
 	StrokeWidth(0);
 	Rect(pos_x-width,pos_y-2 - FONT_SIZE - 4, width+2 , FONT_SIZE + 4);
-
 	Fill(0,0,0,1);
 	TextEnd(pos_x, pos_y - FONT_SIZE - 4, buffer, SansTypeface, FONT_SIZE);
 }

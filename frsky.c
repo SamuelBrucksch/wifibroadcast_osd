@@ -72,7 +72,7 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t *td) {
 			td->latitude +=  1.0 * data / 60 / 10000;
 			break;
 		case ID_COURSE_BP:
-			td->heading = (int16_t)data;
+			td->heading = data;
 			break;
 		case ID_GPS_SPEED_BP:
 			td->speed = 1.0 * data / 0.0194384449;
@@ -89,6 +89,12 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t *td) {
 			break;
 		case ID_ACC_Z:
 			td->z = data;
+			break;
+		case ID_E_W:
+			td->ew = data;
+			break;
+		case ID_N_S:
+			td->ns = data;
 			break;
 		default:
 			new_data = 0;

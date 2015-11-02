@@ -8,5 +8,6 @@ typedef struct {
 	float heading;
 	float speed;
 	int16_t x, y, z;
+	int16_t ew, ns;
 } telemetry_data_t;
 
