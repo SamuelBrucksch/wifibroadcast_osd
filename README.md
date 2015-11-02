@@ -14,6 +14,8 @@ If you want to change the direction change 180.0f to -180.0f. First part is hori
 
 3) Distance does not work yet as well as everything related to coordinates
 
+4) The endless loop in the start scripts might not work anymore as expected. If in TX raspivid fails the loop will not start again as that is run in background. So that might need to be changed, but it is usable for testing purposes right now.
+
 #Installation
 1) increase split memory for GPU in case it is not already 128MB
 
@@ -53,3 +55,10 @@ make
 It is possible to change the size of the Text. Open render.c, in line 17 there you will find #define FONT_SIZE 40, change that value to whatever you like and rebuild (make clean && make).
 
 Later all configuration values will be in a seperate file for easier configuration. Maybe it will be even possible to modify this during runtime.
+
+# Starting OSD
+I uploaded my start scripts as a sample how to start wifibroadcast with 1 video and 1 telemetry stream. have a look at those and adapt your own start scripts based on that.
+
+Telemetry serial on TX is currecntly directly connected to the Raspi serial interface. You need to disable the Linux Serial Console for this. Start raspi-config and go advanced -> serial and disable.
+
+The Raspi Serial expects TTL 3.3V Level, so do not use with any telemetry source that uses 5V TTL Level or even RS232.
