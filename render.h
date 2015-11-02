@@ -25,6 +25,6 @@ void paintVolt(double volt, int pos_x, int pos_y);
 void paintAHI(int hor_angle, int ver_angle);
 void paintAlt(int alt, int pos_x, int pos_y);
 void paintHomeDist(int dist, int pos_x, int pos_y);
-void paintCoordinates(float lat, float lon, int pos_x, int pos_y);
+void paintCoordinates(double lat, double lon, int pos_x, int pos_y);
 void paintSpeed(int speed, int pos_x, int pos_y);
 void paintCourse(int course, int pos_x, int pos_y);
