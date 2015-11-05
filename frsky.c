@@ -50,9 +50,15 @@ int frsky_interpret_packet(frsky_state_t *state, telemetry_data_t *td) {
 		case ID_VOLT:
 		{
 			uint16_t val = (state->pkg[2] >> 8) | ((state->pkg[1] & 0xf) << 8);
-			float battery = 3.0 * val / 500;
+			float battery = 3.0f * val / 500.0f;
 			td->voltage = battery;
 		}
+			break;
+		case ID_ALTITUDE_BP:
+			td->baro_altitude = data;
+			break;
+		case ID_ALTITUDE_AP:
+			//td->baro_altitude += data/100;
 			break;
 		case ID_GPS_ALTIDUTE_BP:
 			td->altitude = data;

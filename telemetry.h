@@ -3,6 +3,7 @@
 typedef struct {
 	float voltage;
 	float altitude;
+	float baro_altitude;
 	double longitude;
 	double latitude;
 	float heading;
