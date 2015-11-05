@@ -59,6 +59,6 @@ Later all configuration values will be in a seperate file for easier configurati
 # Starting OSD
 I uploaded my start scripts as a sample how to start wifibroadcast with 1 video and 1 telemetry stream. have a look at those and adapt your own start scripts based on that.
 
-Telemetry serial on TX is currecntly directly connected to the Raspi serial interface. You need to disable the Linux Serial Console for this. Start raspi-config and go advanced -> serial and disable.
+Telemetry serial on TX can directly be connected to the Raspi serial interface. You need to disable the Linux Serial Console for this. Start raspi-config and go advanced -> serial and disable. This needs to be done on TX and on RX.
 
 The Raspi Serial expects TTL 3.3V Level, so do not use with any telemetry source that uses 5V TTL Level or even RS232.
