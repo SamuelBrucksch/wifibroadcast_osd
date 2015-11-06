@@ -1,7 +1,6 @@
 #!/bin/bash
 # rx script
 
-
 #adapt these to your needs
 CHANNEL="161"
 NICS=`ls /sys/class/net | grep wlan`
@@ -51,6 +50,6 @@ do
 	prepare_nic $NIC $CHANNEL
 done
 
-$SCRIPT_PATH/start_video.sh &
-$SCRIPT_PATH/start_osd.sh &
+$SCRIPT_PATH/start_video.sh $WBC_PATH $DISPLAY_PROGRAM $SCRIPT_PATH $BLOCK_SIZE $FECS $PACKET_LENGTH $PORT $NICS $SAVE_PATH &
+$SCRIPT_PATH/start_osd.sh $WBC_PATH $OSD $SCRIPT_PATH $BLOCK_SIZE $FECS $PACKET_LENGTH $OSD_PORT $NICS &
 
