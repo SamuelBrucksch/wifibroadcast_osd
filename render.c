@@ -78,6 +78,8 @@ void render_init() {
 	t = status_memory_open();
 }
 
+long old_blocks = 0;
+long old_defective = 0;
 void render(telemetry_data_t *td) {
 	Start(width, height);
 	
@@ -88,8 +90,13 @@ void render(telemetry_data_t *td) {
 	paintArrow((int)td->heading, getWidth(50), getHeight(84));
 	//draw_home_indicator((int)td->heading, getWidth(50), getHeight(50), 1.5); 
 	draw_compass(td->heading, getWidth(50), getHeight(89), 2);
+	
+	float packet_rssi = 100.0f - ((float)(t->damaged_block_cnt-old_defective) /(float)(t->received_block_cnt - old_blocks)*100.0f);
+	old_defective = t->damaged_block_cnt;
+	old_blocks = t->received_block_cnt;
+
 	draw_bat_status(td->voltage, 0.0f, getWidth(20), getHeight(5), 2);
-	draw_signal(t->current_signal_dbm, getWidth(20), getHeight(90), 2);
+	draw_signal(t->current_signal_dbm, (int)packet_rssi, getWidth(20), getHeight(90), 2);
 	draw_bat_remaining(((td->voltage/CELLS)-CELL_MIN)/(CELL_MAX-CELL_MIN)*100, getWidth(10), getHeight(90), 3);
 
 	#if defined(FRSKY)
@@ -116,6 +123,7 @@ void render(telemetry_data_t *td) {
 	#elif defined(LTM)
 
 	#endif
+
 	End();
 }
 
@@ -134,15 +142,22 @@ void rotatePoints(float *x, float *y, int angle, int points, int center_x, int c
 	}
 }
 
-void draw_signal(int8_t signal, int pos_x, int pos_y, float scale){
+void draw_signal(int8_t signal, int package_rssi, int pos_x, int pos_y, float scale){
         sprintf(buffer, "Signal: %ddBm", signal);
         float s_width = TextWidth(buffer, SansTypeface, width / 170 * scale);
         Fill(0xff,0xff,0xff,0.5);
         StrokeWidth(0);
         Rect(pos_x-2,pos_y-2, s_width+2 , width / 170 * scale + 4);
-
         Fill(0,0,0,1);
         Text(pos_x, pos_y, buffer, SansTypeface, width / 170 * scale);
+
+ 	sprintf(buffer, "RSSI: %d%%", package_rssi);
+	s_width = TextWidth(buffer, SansTypeface, width / 170 * scale);
+	Fill(0xff,0xff,0xff,0.5);
+        StrokeWidth(0);
+        Rect(pos_x-2,pos_y-2 + (width / 170 * scale) + 4, s_width+2 , width / 170 * scale + 4);
+        Fill(0,0,0,1);
+        Text(pos_x, pos_y + (width / 170 * scale) + 4 , buffer, SansTypeface, width / 170 * scale);
 }
 
 void paintArrow(int heading, int pos_x, int pos_y){
@@ -267,6 +282,7 @@ void paintCourse(int course, int pos_x, int pos_y){
 
 //new stuff from fritz walter https://www.youtube.com/watch?v=EQ01b3aJ-rk
 void draw_bat_remaining(int remaining, int pos_x, int pos_y, float scale){
+	if (remaining < 0) remaining = 0;
 	int s_width = 20 * scale;
 	int s_height = 10 * scale;
 	int corner = 3 * scale;

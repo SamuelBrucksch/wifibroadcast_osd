@@ -43,7 +43,7 @@ void paintCoordinates(double lat, double lon, int pos_x, int pos_y);
 void paintSpeed(int speed, int pos_x, int pos_y);
 void paintCourse(int course, int pos_x, int pos_y);
 
-void draw_signal(int8_t signal, int pos_x, int pos_y, float scale);
+void draw_signal(int8_t signal, int package_rssi, int pos_x, int pos_y, float scale);
 
 //new stuff from fritz walter https://www.youtube.com/watch?v=EQ01b3aJ-rk
 //this will only indicate how much % are left. Mavlink specific, but could be used with others as well.
