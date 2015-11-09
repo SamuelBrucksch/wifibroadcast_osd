@@ -71,8 +71,10 @@ int main(int argc, char *argv[]) {
 
 		//only draw with 5hz as data is not coming in faster anyways
 		if (current_timestamp() > prev_time + 199){
-			render(&td);
 			prev_time = current_timestamp();
+			render(&td);
+			long long took = current_timestamp() - prev_time;
+			printf("Render took %lldms to execute\n.", took);
 		}
 	}
 	return 0;

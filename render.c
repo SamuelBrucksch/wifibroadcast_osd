@@ -9,15 +9,18 @@ const float MIN_VOLTAGE = 10.5;
 #define CELL_MIN 3.00
 
 //positioning of objects, could be exchanged with configurable interface later
-int ARROW_X = 0;
-int ARROW_Y = 0;
 #define VOLT_X 90
 #define VOLT_Y 50
 int mid_y, mid_x;
 #define FONT_SIZE 40
-#define DRAW_ALT_LADDER true
-#define DRAW_SPEED_LADDER true
+#define DRAW_ALT_LADDER false
+#define DRAW_SPEED_LADDER false
 #define DRAW_CURRENT false
+#define DRAW_COURSE_LADDER false
+
+//set to 1 or -1
+#define INVERT_ROLL 1
+#define INVERT_PITCH 1
 
 /* #### Protocol ####
  *
@@ -28,19 +31,14 @@ int mid_y, mid_x;
 #define FRSKY
 
 //Demo values used for simulations
-int asc = 1;
-int hor_angle = -30;
-int ver_angle = -30;
-double volt = 12.6d;
 char buffer[50];
-int heading = 0;
 
 int getWidth(float pos_x_percent) {
-	return (width / 100.0 * pos_x_percent);
+	return (width * 0.01f * pos_x_percent);
 }
 
 int getHeight(float pos_y_percent) {
-	return (height / 100.0 * pos_y_percent);
+	return (height * 0.01f * pos_y_percent);
 }
 
 wifibroadcast_rx_status_t *status_memory_open(void) {
@@ -68,41 +66,43 @@ wifibroadcast_rx_status_t *status_memory_open(void) {
 
 wifibroadcast_rx_status_t *t;
 
+int scale_factor;
+
 void render_init() {
         init(&width, &height);
         mid_x = width/2;
         mid_y = height/2;
-        ARROW_X = width/2-20;
-        ARROW_Y = height-100;
-
 	t = status_memory_open();
+	
+	scale_factor = width/170;
 }
 
 long old_blocks = 0;
 long old_defective = 0;
+float smooth_rssi[3];
+uint8_t pointer = 0; 
 void render(telemetry_data_t *td) {
 	Start(width, height);
-	
-	//paintVolt(td->voltage, VOLT_X, VOLT_Y);
 
 	draw_altitude(td->altitude, getWidth(60), getHeight(50), DRAW_ALT_LADDER, 1.5);
 	draw_speed((int)td->speed, getWidth(40), getHeight(50), DRAW_SPEED_LADDER, 1.5);
-	paintArrow((int)td->heading, getWidth(50), getHeight(84));
-	//draw_home_indicator((int)td->heading, getWidth(50), getHeight(50), 1.5); 
-	draw_compass(td->heading, getWidth(50), getHeight(89), 2);
 	
-	float packet_rssi = 100.0f - ((float)(t->damaged_block_cnt-old_defective) /(float)(t->received_block_cnt - old_blocks)*100.0f);
+	paintArrow((int)td->heading, getWidth(50), getHeight(84));
+	draw_compass(td->heading, getWidth(50), getHeight(89), DRAW_COURSE_LADDER, 2);
+
+	smooth_rssi[pointer++] = 100.0f - ((float)(t->damaged_block_cnt-old_defective) /(float)(t->received_block_cnt - old_blocks)*100.0f);
+	if (pointer == 3) pointer = 0;
+
 	old_defective = t->damaged_block_cnt;
 	old_blocks = t->received_block_cnt;
+	draw_signal(t->current_signal_dbm, (int)((smooth_rssi[0] + smooth_rssi[1] + smooth_rssi[2])/3.0f), getWidth(20), getHeight(90), scale_factor*2);
 
-	draw_bat_status(td->voltage, 0.0f, getWidth(20), getHeight(5), 2);
-	draw_signal(t->current_signal_dbm, (int)packet_rssi, getWidth(20), getHeight(90), 2);
+	draw_bat_status(td->voltage, 0.0f, getWidth(20), getHeight(5), scale_factor * 2);
 	draw_bat_remaining(((td->voltage/CELLS)-CELL_MIN)/(CELL_MAX-CELL_MIN)*100, getWidth(10), getHeight(90), 3);
 
 	#if defined(FRSKY)
 	//we assume that if we get the NS and EW values from frsky protocol, that we have a fix
 	if ((td->ew == 'E' || td->ew == 'W') && (td->ns == 'N' || td->ns == 'S')){
-		//paintCoordinates((td->ns == 'N'? 1:-1) * td->latitude, (td->ew == 'E'? 1:-1) * td->longitude, width - 100, VOLT_Y + FONT_SIZE + 2);
 		draw_position((td->ns == 'N'? 1:-1) * td->latitude, (td->ew == 'E'? 1:-1) * td->longitude, getWidth(5), getHeight(5), 2);
 	}
 	#elif defined(MAVLINK)
@@ -110,54 +110,53 @@ void render(telemetry_data_t *td) {
 	#endif
 
 	#if defined(FRSKY)
-	float x_val, y_val, z_val, result;
-    	x_val = td->x/1000.0f;
-    	y_val = td->y/1000.0f;
-    	z_val = td->z/1000.0f;
+	float x_val, y_val, z_val;
+    	x_val = td->x;
+    	y_val = td->y;
+    	z_val = td->z;
 
-	//TODO vertical angle
-	//paintAHI(180.0f / M_PI * (atan(x_val / sqrt((y_val*y_val) + (z_val*z_val)))), 180.0f/M_PI * (atan(y_val/sqrt((x_val*x_val)+(z_val*z_val)))));
-	draw_horizon(180.0f / M_PI * (atan(x_val / sqrt((y_val*y_val) + (z_val*z_val)))), 180.0f/M_PI * (atan(y_val/sqrt((x_val*x_val)+(z_val*z_val)))), getWidth(50), getHeight(50),true, 1.5f);
+	//draw_horizon(TO_DEG * (atan(x_val / sqrt((y_val*y_val) + (z_val*z_val)))), TO_DEG * (atan(y_val / sqrt((x_val*x_val)+(z_val*z_val)))), getWidth(50), getHeight(50),true, 1.5f);
+	paintAHI(INVERT_ROLL * TO_DEG * (atan(x_val / sqrt((y_val*y_val) + (z_val*z_val)))), INVERT_PITCH * TO_DEG * (atan(y_val / sqrt((x_val*x_val)+(z_val*z_val)))));
 	#elif defined(MAVLINK)
 
 	#elif defined(LTM)
 
 	#endif
-
 	End();
 }
 
 void rotatePoints(float *x, float *y, int angle, int points, int center_x, int center_y){
-	double cosAngle = cos(-angle  * M_PI / 180.0f);
-	double sinAngle = sin(-angle  * M_PI / 180.0f);
+	double cosAngle = cos(-angle * 0.017453292519);
+	double sinAngle = sin(-angle * 0.017453292519);
 
 	int i = 0;
 	int tmp_x = 0;
 	int tmp_y = 0;
-	for (i=0; i < points; i++){
+	while (i < points){
 		tmp_x = center_x + (x[i]-center_x)*cosAngle-(y[i]-center_y)*sinAngle;
 		tmp_y = center_y + (x[i]-center_x)*sinAngle + (y[i] - center_y)*cosAngle;
 		x[i] = tmp_x;
 		y[i] = tmp_y;
+		i++;
 	}
 }
 
 void draw_signal(int8_t signal, int package_rssi, int pos_x, int pos_y, float scale){
         sprintf(buffer, "Signal: %ddBm", signal);
-        float s_width = TextWidth(buffer, SansTypeface, width / 170 * scale);
+        float s_width = TextWidth(buffer, SansTypeface, scale);
         Fill(0xff,0xff,0xff,0.5);
         StrokeWidth(0);
-        Rect(pos_x-2,pos_y-2, s_width+2 , width / 170 * scale + 4);
+        Rect(pos_x-2,pos_y-2, s_width+2 , scale + 4);
         Fill(0,0,0,1);
-        Text(pos_x, pos_y, buffer, SansTypeface, width / 170 * scale);
+        Text(pos_x, pos_y, buffer, SansTypeface, scale);
 
  	sprintf(buffer, "RSSI: %d%%", package_rssi);
-	s_width = TextWidth(buffer, SansTypeface, width / 170 * scale);
+	s_width = TextWidth(buffer, SansTypeface, scale);
 	Fill(0xff,0xff,0xff,0.5);
         StrokeWidth(0);
-        Rect(pos_x-2,pos_y-2 + (width / 170 * scale) + 4, s_width+2 , width / 170 * scale + 4);
+        Rect(pos_x-2,pos_y-2 + scale + 4, s_width+2 , scale + 4);
         Fill(0,0,0,1);
-        Text(pos_x, pos_y + (width / 170 * scale) + 4 , buffer, SansTypeface, width / 170 * scale);
+        Text(pos_x, pos_y + scale + 4 , buffer, SansTypeface, scale);
 }
 
 void paintArrow(int heading, int pos_x, int pos_y){
@@ -178,25 +177,6 @@ void paintArrow(int heading, int pos_x, int pos_y){
 	Polyline(x, y, 8);
 }
 
-void paintVolt(double volt, int pos_x, int pos_y){
-	//TODO font stroke
-	sprintf(buffer, "%0.2fV", volt);
-
-	float width = TextWidth(buffer, SansTypeface, FONT_SIZE);
-	Fill(0xff,0xff,0xff,0.5);
-	StrokeWidth(0);
-	Rect(pos_x-2,pos_y-2, width+2 , FONT_SIZE+4);
-
-	if (volt/CELLS > CELL_MAX-((CELL_MAX-CELL_MIN)/3)){
-		Fill(0x0,0xff,0x0,1);
-	}else if (volt/CELLS > CELL_MAX-((CELL_MAX-CELL_MIN)/3*2)){
-		Fill(255,165,0x0,1);
-	}else{
-		Fill(255, 0,0,1);
-	}
-	Text(pos_x, pos_y, buffer, SansTypeface, FONT_SIZE);
-}
-
 void paintAHI(int hor_angle, int ver_angle){
 	//if vertical angle is larger than 45° leave the ahi at highest pos
 	if (ver_angle > 45)
@@ -204,10 +184,10 @@ void paintAHI(int hor_angle, int ver_angle){
 	else if (ver_angle < -45)
 		ver_angle = -45;
 
-	int offset_x = (width/6*cos(hor_angle*0.017453292519));
-	int offset_y = (width/6*sin(hor_angle*0.017453292519));
+	int offset_x = (width / 6 * cos(hor_angle * 0.017453292519));
+	int offset_y = (width / 6 * sin(hor_angle * 0.017453292519));
 
-	int horizon_y = (mid_y - 100)/45*ver_angle + mid_y;
+	int horizon_y = (mid_y - 100) / 45 * ver_angle + mid_y;
 
 	Stroke(0,0,0,1);
 	StrokeWidth(5);
@@ -219,70 +199,11 @@ void paintAHI(int hor_angle, int ver_angle){
 	Line(mid_x - offset_x,horizon_y - offset_y, mid_x + offset_x, horizon_y + offset_y);
 }
 
-void paintAlt(int alt, int pos_x, int pos_y){
-	//TODO font stroke
-	sprintf(buffer, "Alt: %dm", alt);
-
-	float width = TextWidth(buffer, SansTypeface, FONT_SIZE);
-	Fill(0xff,0xff,0xff,0.5);
-	StrokeWidth(0);
-	Rect(pos_x-2,pos_y-2, width+2 , FONT_SIZE + 4);
-
-	Fill(0,0,0,1);
-	Text(pos_x, pos_y, buffer, SansTypeface, FONT_SIZE);
-}
-
-void paintHomeDist(int dist, int pos_x, int pos_y){
-	//TODO font stroke
-	sprintf(buffer, "Dist: %dm", dist);
-
-	float width = TextWidth(buffer, SansTypeface, FONT_SIZE);
-	Fill(0xff,0xff,0xff,0.5);
-	StrokeWidth(0);
-	Rect(pos_x-2 - 0.5*width,pos_y-2, width+2 , FONT_SIZE + 4);
-
-	Fill(0,0,0,1);
-	Text(pos_x-0.5*width, pos_y, buffer, SansTypeface, FONT_SIZE);
-}
-
-void paintCoordinates(double lat, double lon, int pos_x, int pos_y){
-	sprintf(buffer, "%0.6f", lat);
-	float width = TextWidth(buffer, SansTypeface, FONT_SIZE);
-	Fill(0xff,0xff,0xff,0.5);
-	StrokeWidth(0);
-	Rect(pos_x-width,pos_y-2, width+2 , FONT_SIZE + 4);
-	Fill(0,0,0,1);
-	TextEnd(pos_x, pos_y , buffer, SansTypeface, FONT_SIZE);
-
-	sprintf(buffer, "%0.6f", lon);
-	width = TextWidth(buffer, SansTypeface, FONT_SIZE);
-	Fill(0xff,0xff,0xff,0.5);
-	StrokeWidth(0);
-	Rect(pos_x-width,pos_y-2 - FONT_SIZE - 4, width+2 , FONT_SIZE + 4);
-	Fill(0,0,0,1);
-	TextEnd(pos_x, pos_y - FONT_SIZE - 4, buffer, SansTypeface, FONT_SIZE);
-}
-
-void paintSpeed(int speed, int pos_x, int pos_y){
-	//TODO font stroke
-	sprintf(buffer, "Speed: %dkm/h", speed);
-
-	float width = TextWidth(buffer, SansTypeface, FONT_SIZE);
-	Fill(0xff,0xff,0xff,0.5);
-	StrokeWidth(0);
-	Rect(pos_x-2-width,pos_y-2, width+2 , FONT_SIZE + 4);
-
-	Fill(0,0,0,1);
-	Text(pos_x-width, pos_y, buffer, SansTypeface, FONT_SIZE);
-}
-
-void paintCourse(int course, int pos_x, int pos_y){
-
-}
-
 //new stuff from fritz walter https://www.youtube.com/watch?v=EQ01b3aJ-rk
 void draw_bat_remaining(int remaining, int pos_x, int pos_y, float scale){
+	//prevent black empty indicator to draw left to battery
 	if (remaining < 0) remaining = 0;
+
 	int s_width = 20 * scale;
 	int s_height = 10 * scale;
 	int corner = 3 * scale;
@@ -293,32 +214,34 @@ void draw_bat_remaining(int remaining, int pos_x, int pos_y, float scale){
 	Fill(255, 255, 255, 1);
 	Stroke(0,0,0,1);
 	StrokeWidth(1);
-	Roundrect(pos_x - s_width / 2, pos_y - s_height / 2, s_width, s_height, corner, corner);
-	Rect(pos_x + s_width / 2, pos_y - plus_h / 2, plus_w, plus_h);
+	Roundrect(pos_x, pos_y , s_width, s_height, corner, corner);
+	Rect(pos_x + s_width, pos_y + plus_h/2, plus_w, plus_h);
 
 	Fill(0, 0, 0, 1);
-	Rect(pos_x - s_width / 2 + stroke + remaining / 100.0 * s_width, pos_y - s_height / 2 + stroke, s_width - 2 * stroke - remaining / 100.0 * s_width, s_height - 2 * stroke);
+	Rect(pos_x + stroke + remaining / 100.0f * s_width, pos_y  + stroke, s_width - 2 * stroke - remaining / 100.0f * s_width, s_height - 2 * stroke);
 }
 
-void draw_compass(int heading, int pos_x, int pos_y, float scale){
+
+void draw_compass(int heading, int pos_x, int pos_y, bool ladder_enabled, float scale){
 	int width_number = 50 * scale;
 	int height_number = 20 * scale;
+	int space = 50 * scale;
 
-	VGfloat x[] = { pos_x - width_number / 2, pos_x + width_number / 2, pos_x + width_number / 2, pos_x - width_number / 2, pos_x - width_number / 2 };
-	VGfloat y[] = { pos_y + height_number / 2, pos_y + height_number / 2, pos_y - height_number / 2, pos_y - height_number / 2, pos_y + height_number / 2 };
-
-	StrokeWidth(3);
-	Stroke(0, 0, 0, 1);
-	Polyline(x, y, 5);
-	Fill(255,255,255,0.5);
-	Polygon(x, y, 5);
+	if (!ladder_enabled){
+		pos_y += 20*scale;
+	}
+	StrokeWidth(2);
+	Stroke(0,0,0,1);
+	Fill(255,255,255,0.5f);
+	Rect(pos_x - width_number / 2, pos_y - height_number/2 , width_number, height_number);
 
 	Fill(0,0,0,1);
 	sprintf(buffer, "%3d\xb0", heading);
 	TextMid(pos_x, pos_y - height_number / 4, buffer, SansTypeface, height_number / 2);
 
+	if (ladder_enabled){
 	int width_triangle = 20 * scale;
-	int space = 50 * scale;
+	
 	int p0x = pos_x;
 	int p0y = pos_y + space;
 	int p1x = pos_x - width_triangle / 2;
@@ -330,40 +253,45 @@ void draw_compass(int heading, int pos_x, int pos_y, float scale){
 	VGfloat y2[] = { p0y, p1y, p2y, p0y };
 	Stroke(0, 0, 0, 1);
 	Polyline(x2, y2, 4);
-	Fill(255,255,255,0.5);
+	Fill(255,255,255,0.5f);
 	Polygon(x2, y2, 4);
+	}
 	
-	
+
+	if (ladder_enabled){
 	int width_comp = 150 * scale;
 	int height_comp = 20 * scale;
-	float ratio = width_comp / 180.0;
+	float ratio = width_comp / 180.0f;
 
-	int i;
+	int i = heading - 90;
 	char* c;
 	bool draw = false;
-
-	for (i = (heading - 90); i <= heading + 90; i++) {
+	//find all values from heading - 90 to heading + 90 that are % 15 == 0
+	while (i <= heading + 90) {
 		int x = pos_x + (i - heading) * ratio;
-		if (i % 15 == 0) {
-			Stroke(0,0,0,1);
-			StrokeWidth(5);
-			//outer black border
-			Line(x, pos_y + height_comp / 3 + space / 3, x, pos_y + space / 3);
-			Stroke(0xff,0xff,0xff,1);
-			StrokeWidth(2);
-			//inner white line
-			Line(x, pos_y + height_comp / 3 + space / 3, x, pos_y + space / 3);
-		}
 		if (i % 30 == 0) {
 			Stroke(0,0,0,1);
 			StrokeWidth(5);
 			//outer black border
-			Line(x, pos_y + height_comp / 3 + space / 3 * 1.2, x, pos_y + height_comp / 3 + space / 3);
+			Line(x, pos_y + height_comp / 3 + space / 3.6f, x, pos_y + height_comp / 3 + space / 3);
 			Stroke(0xff,0xff,0xff,1);
 			StrokeWidth(2);
 			//inner white line
-			Line(x, pos_y + height_comp / 3 + space / 3 * 1.2, x, pos_y + height_comp / 3 + space / 3);
+			Line(x, pos_y + height_comp / 3 + space / 3.6f, x, pos_y + height_comp / 3 + space / 3);
+		}else if (i % 15 == 0) {
+			Stroke(0,0,0,1);
+			StrokeWidth(5);
+			//outer black border
+			Line(x, pos_y + height_comp / 3 + space / 3.6f, x, pos_y + space / 3);
+			Stroke(0xff,0xff,0xff,1);
+			StrokeWidth(2);
+			//inner white line
+			Line(x, pos_y + height_comp / 3 + space / 3.6f, x, pos_y + space / 3);
+		}else{
+			i++;
+			continue;
 		}
+		
 
 		int j = i;
 		if (j < 0)
@@ -379,7 +307,7 @@ void draw_compass(int heading, int pos_x, int pos_y, float scale){
 		}
 		case 90: {
 			draw = true;
-			c = "W";
+			c = "0";
 			break;
 		}
 		case 180: {
@@ -389,50 +317,72 @@ void draw_compass(int heading, int pos_x, int pos_y, float scale){
 		}
 		case 270: {
 			draw = true;
-			c = "E";
+			c = "W";
 			break;
 		}
 		}
 		if (draw == true) {
-			Fill(0,0,0,1);
-			TextMid(x, pos_y + height_comp / 3 + space / 3 * 1.6, c, SansTypeface, width / 170 * scale);
+			Fill(255,0,0,1);
+			TextMid(x, pos_y + height_comp / 3 + space / 3 * 1.6f, c, SansTypeface, scale_factor * scale);
 			draw = false;
 		}
+		i++;
+	}
 	}
 }
 
 void draw_bat_status(float voltage, float current, int pos_x, int pos_y, float scale){
 	float space = 15 * scale;
 	sprintf(buffer, "%3.2fV", voltage);
-	Text(pos_x, pos_y, buffer, SansTypeface, width / 170 * scale);
-	#ifdef DRAW_CURRENT
+	float s_width = TextWidth(buffer, SansTypeface, scale);
+	Fill(0xff,0xff,0xff,0.5f);
+        StrokeWidth(0);
+        Rect(pos_x-2,pos_y-2, s_width+2 , scale + 4);
+        Fill(0,0,0,1);
+	Text(pos_x, pos_y, buffer, SansTypeface, scale);
+	
 	sprintf(buffer, "%3.2fA", current);
-	Text(pos_x, pos_y + space, buffer, SansTypeface, width / 170 * scale);
-	#endif
+	s_width = TextWidth(buffer, SansTypeface, scale);
+	StrokeWidth(0);
+        Rect(pos_x-2,pos_y-2+space, s_width+2 , scale + 4);
+        Fill(0,0,0,1);
+	Text(pos_x, pos_y + space, buffer, SansTypeface, scale);
 }
 
 void draw_sat(int sats, int fixtype, int pos_x, int pos_y, float scale){
 	//TODO fix type
-	sprintf(buffer, "S: %d F: %d", sats, fixtype);
-	TextEnd(pos_x, pos_y, buffer, SansTypeface, width / 170 * scale);
+	//sprintf(buffer, "S: %d F: %d", sats, fixtype);
+	//float s_width = TextWidth(buffer, SansTypeface, scale_factor * scale);
+	//TextEnd(pos_x, pos_y, buffer, SansTypeface, scale_factor * scale);
 }
 
 void draw_position(float lat, float lon, int pos_x, int pos_y, float scale){
 	float space = 15 * scale;
 	sprintf(buffer, "Lon: %.6f", lon);
-	Text(pos_x, pos_y, buffer, SansTypeface, width / 170 * scale);
+	float s_width = TextWidth(buffer, SansTypeface, scale_factor * scale);
+	Fill(0xff,0xff,0xff,0.5f);
+        StrokeWidth(0);
+        Rect(pos_x-2,pos_y-2, s_width+2 , scale_factor * scale + 4);
+        Fill(0,0,0,1);
+	Text(pos_x, pos_y, buffer, SansTypeface, scale_factor * scale);
+
 	sprintf(buffer, "Lat: %.6f", lat);
-	Text(pos_x, pos_y + space, buffer, SansTypeface, width / 170 * scale);
+	s_width = TextWidth(buffer, SansTypeface, scale_factor * scale);
+	Fill(0xff,0xff,0xff,0.5f);
+        StrokeWidth(0);
+        Rect(pos_x-2,pos_y-2 + space, s_width+2 , scale_factor * scale + 4);
+        Fill(0,0,0,1);
+	Text(pos_x, pos_y + space, buffer, SansTypeface, scale_factor * scale);
 }
 
 void draw_home_distance(int distance, int pos_x, int pos_y, float scale){
 	sprintf(buffer, "%5dm", distance);
-	TextMid(pos_x, pos_y, buffer, SansTypeface, width / 170 * scale);
+	TextMid(pos_x, pos_y, buffer, SansTypeface, scale_factor * scale);
 }
 
 //autopilot mode, mavlink specific, could be used if mode is in telemetry data of other protocols as well
 void draw_mode(char *mode, int pos_x, int pos_y, float scale){
-	TextEnd(pos_x, pos_y, mode, SansTypeface, width / 170 * scale);
+	TextEnd(pos_x, pos_y, mode, SansTypeface, scale_factor * scale);
 }
 
 void draw_home_indicator(int home_angle, int pos_x, int pos_y, float scale){
@@ -446,7 +396,7 @@ void draw_home_indicator(int home_angle, int pos_x, int pos_y, float scale){
 	VGfloat y[100];
 	int z = 0;
 
-	for (i = 0; i < 6.28; i += 0.1) {
+	for (i = 0; i < 6.28f; i += 0.1f) {
 		x[z] = sin(i) * radius + pos_x;
 		y[z] = cos(i) * radius + pos_y;
 		z++;
@@ -494,11 +444,11 @@ void draw_altitude(int alt, int pos_x, int pos_y, bool ladder_enabled, float sca
 	x[5] = x[0];
 	y[5] = y[0];
 	Polyline(x, y, 6);
-	Fill(255,255,255,0.5);
+	Fill(255,255,255,0.5f);
 	Polygon(x, y, 6);
 	Fill(0,0,0,1);
 	sprintf(buffer, "%d", alt);
-	TextMid(pos_x_r + s_width / 2 + s_width / 5, pos_y - width / 170 * scale / 2, buffer, SansTypeface, width / 170 * scale);
+	TextMid(pos_x_r + s_width / 2 + s_width / 5, pos_y - scale_factor * scale / 2, buffer, SansTypeface, scale_factor * scale);
 
 	if (ladder_enabled){
 		int width_ladder = 150 * scale;
@@ -532,7 +482,7 @@ void draw_altitude(int alt, int pos_x, int pos_y, bool ladder_enabled, float sca
 			if (k % 100 == 0) {
 				int px = pos_x + width_ladder / 2 + distance + width_speed;
 				int px2 = px + 2 * length_bar;
-								Stroke(0,0,0,1);
+				Stroke(0,0,0,1);
 				StrokeWidth(5);
 				//outer black border
 				Line(px, y, px2, y);
@@ -575,11 +525,11 @@ void draw_speed(int speed, int pos_x, int pos_y, bool ladder_enabled, float scal
 	x[5] = x[0];
 	y[5] = y[0];
 	Polyline(x, y, 6);
-	Fill(255,255,255,0.5);
+	Fill(255,255,255,0.5f);
 	Polygon(x, y, 6);
 	Fill(0,0,0,1);
 	sprintf(buffer, "%d", speed);
-	TextMid(pos_x_l - s_width / 2 - s_width / 5, pos_y - width / 170 * scale / 2, buffer, SansTypeface, width / 170 * scale);
+	TextMid(pos_x_l - s_width / 2 - s_width / 5, pos_y - scale_factor * scale / 2, buffer, SansTypeface, scale_factor * scale);
 	
 	if (ladder_enabled){
 		//ladder speed
@@ -639,14 +589,16 @@ void draw_horizon(float roll, float pitch, int pos_x, int pos_y, bool ladder_ena
 	int space_text = 5 * scale;
 	int pike = 4 * scale;
 	float ratio = height_ladder / range;
-	int k;
+	//int k;
 	Translate(pos_x, pos_y);
 	Rotate(roll);
 	Translate(-pos_x, -pos_y);
 
 	int y_start = height_ladder;
 
-	for (k = (int) (pitch - range / 2); k <= pitch + range / 2; k++){ 
+	int k = pitch - range/2;
+	int max = pitch + range/2;
+	while (k <= max){
 		int y = pos_y + (k - pitch) * ratio;
 		sprintf(buffer, "%d", k);
 		if (k % 5 == 0 && k!= 0) {
@@ -693,13 +645,13 @@ void draw_horizon(float roll, float pitch, int pos_x, int pos_y, bool ladder_ena
 			//inner white line
 			Line(px2, y, px2, y - pike);
 		} else if ((k < 0) && (k % 5 == 0)) {
-			int px = pos_x - width_ladder / 2 + 13 / 13.0 * width_ladder / 3;
-			int px2 = pos_x - width_ladder / 2 + 10 / 13.0 * width_ladder / 3;
+			int px = pos_x - width_ladder / 2 +width_ladder / 3;
+			int px2 = pos_x - width_ladder / 2 + 0.256f * width_ladder;
 
-			int px3 = pos_x - width_ladder / 2 + 8 / 13.0 * width_ladder / 3;
-			int px4 = pos_x - width_ladder / 2 + 5 / 13.0 * width_ladder / 3;
+			int px3 = pos_x - width_ladder / 2 + 0.2055f * width_ladder;
+			int px4 = pos_x - width_ladder / 2 + 0.128f  * width_ladder;
 
-			int px5 = pos_x - width_ladder / 2 + 3 / 13.0 * width_ladder / 3;
+			int px5 = pos_x - width_ladder / 2 + 0.077f * width_ladder;
 			int px6 = pos_x - width_ladder / 2;
 
 			Stroke(0,0,0,1);
@@ -738,13 +690,13 @@ void draw_horizon(float roll, float pitch, int pos_x, int pos_y, bool ladder_ena
 			//inner white line
 			Line(px6, y, px6, y + pike);
 
-			px = pos_x + width_ladder / 2 - 13 / 13.0 * width_ladder / 3;
-			px2 = pos_x + width_ladder / 2 - 10 / 13.0 * width_ladder / 3;
+			px = pos_x + width_ladder / 2 -  width_ladder / 3;
+			px2 = pos_x + width_ladder / 2 - 0.256f * width_ladder;
 
-			px3 = pos_x + width_ladder / 2 - 8 / 13.0 * width_ladder / 3;
-			px4 = pos_x + width_ladder / 2 - 5 / 13.0 * width_ladder / 3;
+			px3 = pos_x + width_ladder / 2 - 0.205f * width_ladder;
+			px4 = pos_x + width_ladder / 2 - 0.128f * width_ladder;
 
-			px5 = pos_x + width_ladder / 2 - 3 / 13.0 * width_ladder / 3;
+			px5 = pos_x + width_ladder / 2 - 0.077f * width_ladder;
 			px6 = pos_x + width_ladder / 2;
 
 			Stroke(0,0,0,1);
@@ -784,17 +736,22 @@ void draw_horizon(float roll, float pitch, int pos_x, int pos_y, bool ladder_ena
 			Line(px6, y, px6, y + pike);
 
 		} else if (k == 0) {
-			TextEnd(pos_x - width_ladder / 1.25 - space_text, y - width / 600 * scale, buffer, SansTypeface, width / 300 * scale);
-			Text(pos_x + width_ladder / 1.25 + space_text, y - width / 600 * scale, buffer, SansTypeface, width / 300 * scale);
+			TextEnd(pos_x - width_ladder / 1.25f - space_text, y - width / 600 * scale, buffer, SansTypeface, width / 300 * scale);
+			Text(pos_x + width_ladder / 1.25f + space_text, y - width / 600 * scale, buffer, SansTypeface, width / 300 * scale);
 
 			Stroke(0,0,0,1);
 			StrokeWidth(5);
 			//outer black border
-			Line(pos_x - width_ladder / 1.25, y, pos_x + width_ladder / 1.25, y);
+			Line(pos_x - width_ladder / 1.25f, y, pos_x + width_ladder / 1.25f, y);
 			Stroke(0xff,0xff,0xff,1);
 			StrokeWidth(2);
 			//inner white line
-			Line(pos_x - width_ladder / 1.25, y, pos_x + width_ladder / 1.25, y);
+			Line(pos_x - width_ladder / 1.25f, y, pos_x + width_ladder / 1.25f, y);
 		}
+		k++;
 	}
+
+	/*for (k = (int) (pitch - range / 2); k <= pitch + range / 2; k++){ 
+		
+	}*/
 }

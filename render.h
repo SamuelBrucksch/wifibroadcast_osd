@@ -27,6 +27,7 @@
 #include <sys/mman.h>
 #include <stdbool.h>
 
+#define TO_DEG 180.0f / M_PI
 
 void render_init();
 void render(telemetry_data_t *td);
@@ -35,20 +36,13 @@ void render(telemetry_data_t *td);
 void rotatePoints(float *x, float *y, int angle, int points, int center_x, int center_y);
 
 void paintArrow(int heading, int pos_x, int pos_y);
-void paintVolt(double volt, int pos_x, int pos_y);
 void paintAHI(int hor_angle, int ver_angle);
-void paintAlt(int alt, int pos_x, int pos_y);
-void paintHomeDist(int dist, int pos_x, int pos_y);
-void paintCoordinates(double lat, double lon, int pos_x, int pos_y);
-void paintSpeed(int speed, int pos_x, int pos_y);
-void paintCourse(int course, int pos_x, int pos_y);
-
 void draw_signal(int8_t signal, int package_rssi, int pos_x, int pos_y, float scale);
 
 //new stuff from fritz walter https://www.youtube.com/watch?v=EQ01b3aJ-rk
 //this will only indicate how much % are left. Mavlink specific, but could be used with others as well.
 void draw_bat_remaining(int remaining, int pos_x, int pos_y, float scale);
-void draw_compass(int heading, int pos_x, int pos_y, float scale);
+void draw_compass(int heading, int pos_x, int pos_y, bool ladder_enabled, float scale);
 void draw_bat_status(float voltage, float current, int pos_x, int pos_y, float scale);
 void draw_sat(int sats, int fixtype, int pos_x, int pos_y, float scale);
 void draw_position(float lat, float lon, int pos_x, int pos_y, float scale);
