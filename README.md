@@ -23,8 +23,6 @@ Most of the steps should be the same.
 
 3) Distance does not work yet as well as everything related to coordinates
 
-4) The endless loop in the start scripts might not work anymore as expected. If in TX raspivid fails the loop will not start again as that is run in background. So that might need to be changed, but it is usable for testing purposes right now.
-
 #Installation
 1) increase split memory for GPU in case it is not already 128MB
 
