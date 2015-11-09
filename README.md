@@ -3,6 +3,11 @@ OSD for HD wireless FPV system based on wifibroadcast from befi
 
 This project uses the openvg library to draw 2d objects onto the screen. It is an OSD that uses the telemetry of already existing systems like mavlink, frsky direct GPS and so on.
 
+If some steps in setting up the osd is unclear visit the blog from befi and check if it helps:
+https://befinitiv.wordpress.com/2015/07/06/telemetry-osd-for-wifibroadcast/
+
+Most of the steps should be the same.
+
 # Possible issues
 0) Current implementation is pretty slow. It is recommended to disable the speed and alt ladder, this can be done with the #define ALT_LADDER and SPEED_LADDER in the upper part of render.c Just change true to false. This will already improve the speed a lot. Also it is recommended to currently use paintAHI instead of draw_horizon.
 
