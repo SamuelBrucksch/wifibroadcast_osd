@@ -59,7 +59,7 @@ make
 ```
 
 #Configuration
-Later all configuration values will be in a seperate file for easier configuration. Maybe it will be even possible to modify this during runtime. But right now everything is in testing mode only, so no config yet.
+Later all configuration values will be in a seperate file for easier configuration. Maybe it will be even possible to modify this during runtime. But right now everything is in testing mode only, so no easy config yet.
 
 # Starting OSD
 I uploaded my start scripts as a sample how to start wifibroadcast with 1 video and 1 telemetry stream. have a look at those and adapt your own start scripts based on that.
