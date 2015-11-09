@@ -64,6 +64,6 @@ Later all configuration values will be in a seperate file for easier configurati
 # Starting OSD
 I uploaded my start scripts as a sample how to start wifibroadcast with 1 video and 1 telemetry stream. have a look at those and adapt your own start scripts based on that.
 
-Telemetry serial on TX can directly be connected to the Raspi serial interface (GPIO Pin 10). You need to disable the Linux Serial Console for this on the transmitter side. Start raspi-config and go advanced -> serial and disable. late it will be possible to passthrough the telemetry on RX, then there you need to disable Serial as well, right now there is no need to disable Serial on the RX.
+Telemetry serial of your flight control can directly be connected to the Raspi serial interface. TX of flight control needs to be connected to RX on Raspi (GPIO Pin 10). You need to disable the Linux Serial Console for this on the transmitter side. Start raspi-config and go advanced -> serial and disable. late it will be possible to passthrough the telemetry on RX, then there you need to disable Serial as well, right now there is no need to disable Serial on the RX.
 
 **The Raspi Serial expects TTL 3.3V Level, so do not use with any telemetry source that uses 5V TTL Level or even RS232.**
