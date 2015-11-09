@@ -13,9 +13,11 @@ Most of the steps should be the same.
 
 1) The AHI might indicate the opposite direction. This can be fixed by changing this part in render.c
 ```
-paintAHI(180.0f / M_PI * (atan(x_val / sqrt((y_val*y_val) + (z_val*z_val)))), 180.0f/M_PI * (atan(y_val/sqrt((x_val*x_val)+(z_val*z_val)))));
+//set to 1 or -1
+#define INVERT_ROLL 1
+#define INVERT_PITCH 1
 ```
-If you want to change the direction change 180.0f to -180.0f. First part is horizontal indication, second part is vertical indication.
+-1 for reversed and 1 for normal.
 
 2) The home arrow currently does not point to home, but shows the heading (like a compass).
 
