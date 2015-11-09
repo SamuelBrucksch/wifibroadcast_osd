@@ -59,9 +59,7 @@ make
 ```
 
 #Configuration
-It is possible to change the size of the Text. Open render.c, in line 17 there you will find #define FONT_SIZE 40, change that value to whatever you like and rebuild (make clean && make).
-
-Later all configuration values will be in a seperate file for easier configuration. Maybe it will be even possible to modify this during runtime.
+Later all configuration values will be in a seperate file for easier configuration. Maybe it will be even possible to modify this during runtime. But right now everything is in testing mode only, so no config yet.
 
 # Starting OSD
 I uploaded my start scripts as a sample how to start wifibroadcast with 1 video and 1 telemetry stream. have a look at those and adapt your own start scripts based on that.
