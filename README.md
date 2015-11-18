@@ -37,10 +37,10 @@ In advanced -> Memory Split -> 128MB
 sudo apt-get install libjpeg8-dev indent libfreetype6-dev ttf-dejavu-core
 ```
 
-3) download modified openvg library (uses layer 1 instead of 0 and the default background is transparent)
+3) download modified openvg library (uses layer 1 instead of 0 and the default background is transparent, also it allows outlines around texts)
 ```
 cd
-git clone https://github.com/myshopradio/openvg.git
+https://github.com/SamuelBrucksch/openvg
 ```
 
 4) Install library
