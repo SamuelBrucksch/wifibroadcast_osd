@@ -37,20 +37,16 @@ In advanced -> Memory Split -> 128MB
 sudo apt-get install libjpeg8-dev indent libfreetype6-dev ttf-dejavu-core
 ```
 
-3) download modified openvg library (uses layer 1 instead of 0 and the default background is transparent)
+3) download and install modified openvg library (uses layer 1 instead of 0, default background is transparent, allows outlines on text)
 ```
 cd
-git clone https://github.com/myshopradio/openvg.git
-```
-
-4) Install library
-```
+git clone https://github.com/SamuelBrucksch/openvg
 cd openvg
 make library
 sudo make install
 ```
 
-5) Download and compile osd source code
+4) Download and compile osd source code
 ```
 cd
 git clone https://github.com/SamuelBrucksch/wifibroadcast_osd.git
