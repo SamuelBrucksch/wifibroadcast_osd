@@ -6,11 +6,9 @@ This project uses the openvg library to draw 2d objects onto the screen. It is a
 If some steps in setting up the osd is unclear visit the blog from befi and check if it helps:
 https://befinitiv.wordpress.com/2015/07/06/telemetry-osd-for-wifibroadcast/
 
-Most of the steps should be the same.
+Most of the steps should be the same. **Requires latest wifibroadcast version**
 
 # Possible issues
-0) Current implementation is pretty slow. It is recommended to disable the speed and alt ladder, this can be done with the #define ALT_LADDER and SPEED_LADDER in the upper part of render.c Just change true to false. This will already improve the speed a lot. Also it is recommended to currently use paintAHI instead of draw_horizon.
-
 1) The AHI might indicate the opposite direction. This can be fixed by changing this part in render.c
 ```
 //set to 1 or -1
@@ -19,7 +17,7 @@ Most of the steps should be the same.
 ```
 -1 for reversed and 1 for normal.
 
-2) The home arrow currently does not point to home, but shows the heading (like a compass).
+2) The home arrow currently does not point to home, but shows the heading (like a compass). This will be changed once home distance and so on is implemented (see 3).
 
 3) Distance does not work yet as well as everything related to coordinates
 
