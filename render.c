@@ -22,6 +22,9 @@ int mid_y, mid_x;
 #define INVERT_ROLL 1
 #define INVERT_PITCH 1
 
+//packet based rssi, uncomment to disable
+//#define PACKET_BASED_RSSI
+
 /* #### Protocol ####
  *
  *  FRSKY -> Frsky protocoll
@@ -137,8 +140,10 @@ void draw_signal(int8_t signal, int package_rssi, int pos_x, int pos_y, float sc
 	sprintf(buffer, "Signal: %ddBm", signal);
 	Text(pos_x, pos_y, buffer, SansTypeface, scale);
 
+#ifdef PACKET_BASED_RSSI
 	sprintf(buffer, "RSSI: %d%%", package_rssi);
 	Text(pos_x, pos_y + scale + 4 , buffer, SansTypeface, scale);
+#endif
 }
 
 void paintArrow(int heading, int pos_x, int pos_y){
