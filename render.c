@@ -102,9 +102,9 @@ void render(telemetry_data_t *td) {
 
 	#if defined(FRSKY)
 	//we assume that if we get the NS and EW values from frsky protocol, that we have a fix
-	//if ((td->ew == 'E' || td->ew == 'W') && (td->ns == 'N' || td->ns == 'S')){
+	if ((td->ew == 'E' || td->ew == 'W') && (td->ns == 'N' || td->ns == 'S')){
 		draw_position((td->ns == 'N'? 1:-1) * td->latitude, (td->ew == 'E'? 1:-1) * td->longitude, getWidth(85), getHeight(5), scale_factor*2);
-	//}
+	}
 	#elif defined(MAVLINK)
 
 	#endif
