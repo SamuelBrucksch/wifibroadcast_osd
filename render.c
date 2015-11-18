@@ -23,7 +23,19 @@ int mid_y, mid_x;
 #define INVERT_PITCH 1
 
 //packet based rssi, uncomment to disable
+//not implemented yet
 //#define PACKET_BASED_RSSI
+
+//comment to disable feature
+#define RSSI
+#define HEADING
+#define HOME_ARROW
+#define BATT_REMAINING
+#define BATT_STATUS
+#define ALT
+#define SPEED
+#define POSITION
+#define HORIZON
 
 /* #### Protocol ####
  *
@@ -33,7 +45,6 @@ int mid_y, mid_x;
  */
 #define FRSKY
 
-//Demo values used for simulations
 char buffer[50];
 
 int getWidth(float pos_x_percent) {
@@ -60,13 +71,19 @@ float smooth_rssi[3];
 uint8_t pointer = 0; */
 void render(telemetry_data_t *td) {
 	Start(width, height);
-
+#ifdef ALT
 	draw_altitude(td->altitude, getWidth(60), getHeight(50), DRAW_ALT_LADDER, 1.5);
+#endif
+#ifdef SPEED
 	draw_speed((int)td->speed, getWidth(40), getHeight(50), DRAW_SPEED_LADDER, 1.5);
-	
+#endif
+#ifdef HOME_ARROW
 	paintArrow((int)td->heading, getWidth(50), getHeight(84));
+#endif
+#ifdef HEADING
 	draw_compass(td->heading, getWidth(50), getHeight(89), DRAW_COURSE_LADDER, 2);
-
+#endif
+#ifdef RSSI
 	if(td->rx_status != NULL) {
 		int i;
 		int ac = td->rx_status->wifi_adapter_cnt;
@@ -84,10 +101,14 @@ void render(telemetry_data_t *td) {
 		//old_blocks = t->received_block_cnt;
 		draw_signal(best_dbm, 0/*(int)((smooth_rssi[0] + smooth_rssi[1] + smooth_rssi[2])/3.0f)*/, getWidth(20), getHeight(90), scale_factor*2);
 	}
-
+#endif
+#ifdef BATT_STATUS
 	draw_bat_status(td->voltage, 0.0f, getWidth(20), getHeight(5), scale_factor * 2);
+#endif
+#ifdef BATT_REMAINING
 	draw_bat_remaining(((td->voltage/CELLS)-CELL_MIN)/(CELL_MAX-CELL_MIN)*100, getWidth(10), getHeight(90), 3);
-
+#endif
+#ifdef POSITION
 	#if defined(FRSKY)
 	//we assume that if we get the NS and EW values from frsky protocol, that we have a fix
 	if ((td->ew == 'E' || td->ew == 'W') && (td->ns == 'N' || td->ns == 'S')){
@@ -99,7 +120,8 @@ void render(telemetry_data_t *td) {
 	#elif defined(MAVLINK)
 
 	#endif
-
+#endif
+#ifdef HORIZON
 	#if defined(FRSKY)
 	float x_val, y_val, z_val;
     	x_val = td->x;
@@ -113,6 +135,7 @@ void render(telemetry_data_t *td) {
 	#elif defined(LTM)
 
 	#endif
+#endif
 	End();
 }
 
