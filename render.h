@@ -13,7 +13,6 @@
 #include <EGL/eglext.h>
 #include <stdio.h>
 #include "telemetry.h"
-#include "../wifibroadcast/lib.h"
 
 #include <errno.h>
 #include <resolv.h>

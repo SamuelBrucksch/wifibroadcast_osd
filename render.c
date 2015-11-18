@@ -41,46 +41,20 @@ int getHeight(float pos_y_percent) {
 	return (height * 0.01f * pos_y_percent);
 }
 
-wifibroadcast_rx_status_t *status_memory_open(void) {
-        int fd = shm_open("/wifibroadcast_rx_status", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-
-        if(fd < 0) {
-                perror("shm_open");
-                exit(1);
-        }
-
-        if (ftruncate(fd, sizeof(wifibroadcast_rx_status_t)) == -1) {
-                perror("ftruncate");
-                exit(1);
-        }
-
-        void *retval = mmap(NULL, sizeof(wifibroadcast_rx_status_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-        if (retval == MAP_FAILED) {
-                perror("mmap");
-                exit(1);
-        }
-
-
-        return (wifibroadcast_rx_status_t*)retval;
-}
-
-wifibroadcast_rx_status_t *t;
-
 int scale_factor;
 
 void render_init() {
         init(&width, &height);
         mid_x = width/2;
         mid_y = height/2;
-	t = status_memory_open();
 	
 	scale_factor = width/170;
 }
 
-long old_blocks = 0;
+/*long old_blocks = 0;
 long old_defective = 0;
 float smooth_rssi[3];
-uint8_t pointer = 0; 
+uint8_t pointer = 0; */
 void render(telemetry_data_t *td) {
 	Start(width, height);
 
@@ -90,12 +64,23 @@ void render(telemetry_data_t *td) {
 	paintArrow((int)td->heading, getWidth(50), getHeight(84));
 	draw_compass(td->heading, getWidth(50), getHeight(89), DRAW_COURSE_LADDER, 2);
 
-	smooth_rssi[pointer++] = 100.0f - ((float)(t->damaged_block_cnt-old_defective) /(float)(t->received_block_cnt - old_blocks)*100.0f);
-	if (pointer == 3) pointer = 0;
+	if(td->rx_status != NULL) {
+		int i;
+		int ac = td->rx_status->wifi_adapter_cnt;
+		int best_dbm = -1000;
+		for(i=0; i<ac; ++i) {
+			//sprintf(text, "c%d: %ddBm", i, td->rx_status->adapter[i].current_signal_dbm);
+			if (best_dbm < td->rx_status->adapter[i].current_signal_dbm)
+				best_dbm = td->rx_status->adapter[i].current_signal_dbm;
+			//render_text(text, rd, RENDER_OFFSET_X + 8 * RENDER_SPACING, text_y - (ac-1) * 1 * RENDER_FONT_SIZE + i * RENDER_FONT_SIZE, RENDER_FONT_SIZE, 0xff, 0xff, 0xff);
+		}
+		//smooth_rssi[pointer++] = 100.0f - ((float)(t->damaged_block_cnt-old_defective) /(float)(t->received_block_cnt - old_blocks)*100.0f);
+		//if (pointer == 3) pointer = 0;
 
-	old_defective = t->damaged_block_cnt;
-	old_blocks = t->received_block_cnt;
-	draw_signal(t->current_signal_dbm, (int)((smooth_rssi[0] + smooth_rssi[1] + smooth_rssi[2])/3.0f), getWidth(20), getHeight(90), scale_factor*2);
+		//old_defective = t->damaged_block_cnt;
+		//old_blocks = t->received_block_cnt;
+		draw_signal(best_dbm, 0/*(int)((smooth_rssi[0] + smooth_rssi[1] + smooth_rssi[2])/3.0f)*/, getWidth(20), getHeight(90), scale_factor*2);
+	}
 
 	draw_bat_status(td->voltage, 0.0f, getWidth(20), getHeight(5), scale_factor * 2);
 	draw_bat_remaining(((td->voltage/CELLS)-CELL_MIN)/(CELL_MAX-CELL_MIN)*100, getWidth(10), getHeight(90), 3);

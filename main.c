@@ -37,6 +37,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "telemetry.h"
 #include "frsky.h"
 #include "render.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/select.h>
+
+//#define DEBUG
 
 long long current_timestamp() {
     struct timeval te; 
@@ -45,37 +51,52 @@ long long current_timestamp() {
     return milliseconds;
 }
 
+fd_set set;
+
+struct timeval timeout;
+
 int main(int argc, char *argv[]) {
 	uint8_t buf[256];
 	size_t n;
 	frsky_state_t fs;
 	telemetry_data_t td;
+	telemetry_init(&td);
 
 	render_init();
 
 	long long prev_time = current_timestamp();
 	while(1) {
-		n = read(STDIN_FILENO, buf, sizeof(buf));
+		FD_ZERO(&set);
+		FD_SET(STDIN_FILENO, &set);
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 200*1000;
+		n = select(STDIN_FILENO + 1, &set, NULL, NULL, &timeout);
+		//printf("%d\n",n);
+		if(n > 0) {
+			n = read(STDIN_FILENO, buf, sizeof(buf));
 
-		if(n == 0) {
-		//	break; //EOF
-			continue;
-		}else if(n<0) {
-			perror("read");
-			exit(-1);
-		}else{
-			if (!frsky_parse_buffer(&fs, &td, buf, n)){
-				continue;
+			if(n == 0) {
+			//	break; //EOF
 			}
-		}
 
-		//only draw with 5hz as data is not coming in faster anyways
-		if (current_timestamp() > prev_time + 199){
-			prev_time = current_timestamp();
-			render(&td);
-			long long took = current_timestamp() - prev_time;
-			printf("Render took %lldms to execute\n.", took);
+			if(n<0) {
+				perror("read");
+				exit(-1);
+			}
+
+			frsky_parse_buffer(&fs, &td, buf, n);
 		}
+		
+	#ifdef DEBUG
+		prev_time = current_timestamp();
+		render(&td);
+		long long took = current_timestamp() - prev_time;
+		printf("Render took %lldms to execute.\n", took);
+	#else
+		render(&td);
+	#endif
+
 	}
+
 	return 0;
 }
