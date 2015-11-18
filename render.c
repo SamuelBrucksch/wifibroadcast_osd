@@ -102,9 +102,9 @@ void render(telemetry_data_t *td) {
 
 	#if defined(FRSKY)
 	//we assume that if we get the NS and EW values from frsky protocol, that we have a fix
-	if ((td->ew == 'E' || td->ew == 'W') && (td->ns == 'N' || td->ns == 'S')){
-		draw_position((td->ns == 'N'? 1:-1) * td->latitude, (td->ew == 'E'? 1:-1) * td->longitude, getWidth(5), getHeight(5), 2);
-	}
+	//if ((td->ew == 'E' || td->ew == 'W') && (td->ns == 'N' || td->ns == 'S')){
+		draw_position((td->ns == 'N'? 1:-1) * td->latitude, (td->ew == 'E'? 1:-1) * td->longitude, getWidth(85), getHeight(5), scale_factor*2);
+	//}
 	#elif defined(MAVLINK)
 
 	#endif
@@ -142,21 +142,15 @@ void rotatePoints(float *x, float *y, int angle, int points, int center_x, int c
 }
 
 void draw_signal(int8_t signal, int package_rssi, int pos_x, int pos_y, float scale){
-        sprintf(buffer, "Signal: %ddBm", signal);
-        float s_width = TextWidth(buffer, SansTypeface, scale);
-        Fill(0xff,0xff,0xff,0.5);
-        StrokeWidth(0);
-        Rect(pos_x-2,pos_y-2, s_width+2 , scale + 4);
-        Fill(0,0,0,1);
-        Text(pos_x, pos_y, buffer, SansTypeface, scale);
+	Fill(0xff,0xff,0xff,1);
+	Stroke(0,0,0,1);
+	StrokeWidth(1);
 
- 	sprintf(buffer, "RSSI: %d%%", package_rssi);
-	s_width = TextWidth(buffer, SansTypeface, scale);
-	Fill(0xff,0xff,0xff,0.5);
-        StrokeWidth(0);
-        Rect(pos_x-2,pos_y-2 + scale + 4, s_width+2 , scale + 4);
-        Fill(0,0,0,1);
-        Text(pos_x, pos_y + scale + 4 , buffer, SansTypeface, scale);
+	sprintf(buffer, "Signal: %ddBm", signal);
+	Text(pos_x, pos_y, buffer, SansTypeface, scale);
+
+	sprintf(buffer, "RSSI: %d%%", package_rssi);
+	Text(pos_x, pos_y + scale + 4 , buffer, SansTypeface, scale);
 }
 
 void paintArrow(int heading, int pos_x, int pos_y){
@@ -232,10 +226,13 @@ void draw_compass(int heading, int pos_x, int pos_y, bool ladder_enabled, float 
 	}
 	StrokeWidth(2);
 	Stroke(0,0,0,1);
-	Fill(255,255,255,0.5f);
+	Fill(255,255,255,0);
 	Rect(pos_x - width_number / 2, pos_y - height_number/2 , width_number, height_number);
 
-	Fill(0,0,0,1);
+	//Fill(0,0,0,1);
+	Fill(0xff,0xff,0xff,1);
+	Stroke(0,0,0,1);
+	StrokeWidth(1);
 	sprintf(buffer, "%3d\xb0", heading);
 	TextMid(pos_x, pos_y - height_number / 4, buffer, SansTypeface, height_number / 2);
 
@@ -332,21 +329,15 @@ void draw_compass(int heading, int pos_x, int pos_y, bool ladder_enabled, float 
 }
 
 void draw_bat_status(float voltage, float current, int pos_x, int pos_y, float scale){
-	float space = 15 * scale;
-	sprintf(buffer, "%3.2fV", voltage);
-	float s_width = TextWidth(buffer, SansTypeface, scale);
-	Fill(0xff,0xff,0xff,0.5f);
-        StrokeWidth(0);
-        Rect(pos_x-2,pos_y-2, s_width+2 , scale + 4);
-        Fill(0,0,0,1);
-	Text(pos_x, pos_y, buffer, SansTypeface, scale);
+	Fill(0xff,0xff,0xff,1);
+	Stroke(0,0,0,1);
+	StrokeWidth(1);
 	
-	sprintf(buffer, "%3.2fA", current);
-	s_width = TextWidth(buffer, SansTypeface, scale);
-	StrokeWidth(0);
-        Rect(pos_x-2,pos_y-2+space, s_width+2 , scale + 4);
-        Fill(0,0,0,1);
-	Text(pos_x, pos_y + space, buffer, SansTypeface, scale);
+	sprintf(buffer, "%.2fV", voltage);
+	TextEnd(pos_x, pos_y, buffer, SansTypeface, scale);
+
+	sprintf(buffer, "%.2fA", current);
+	TextEnd(pos_x, pos_y + 30, buffer, SansTypeface, scale);
 }
 
 void draw_sat(int sats, int fixtype, int pos_x, int pos_y, float scale){
@@ -357,22 +348,15 @@ void draw_sat(int sats, int fixtype, int pos_x, int pos_y, float scale){
 }
 
 void draw_position(float lat, float lon, int pos_x, int pos_y, float scale){
-	float space = 15 * scale;
-	sprintf(buffer, "Lon: %.6f", lon);
-	float s_width = TextWidth(buffer, SansTypeface, scale_factor * scale);
-	Fill(0xff,0xff,0xff,0.5f);
-        StrokeWidth(0);
-        Rect(pos_x-2,pos_y-2, s_width+2 , scale_factor * scale + 4);
-        Fill(0,0,0,1);
-	Text(pos_x, pos_y, buffer, SansTypeface, scale_factor * scale);
+	Fill(0xff,0xff,0xff,1);
+	Stroke(0,0,0,1);
+	StrokeWidth(1);
 
+	sprintf(buffer, "Lon: %.6f", lon);
+	TextEnd(pos_x, pos_y, buffer, SansTypeface, scale);
 	sprintf(buffer, "Lat: %.6f", lat);
-	s_width = TextWidth(buffer, SansTypeface, scale_factor * scale);
-	Fill(0xff,0xff,0xff,0.5f);
-        StrokeWidth(0);
-        Rect(pos_x-2,pos_y-2 + space, s_width+2 , scale_factor * scale + 4);
-        Fill(0,0,0,1);
-	Text(pos_x, pos_y + space, buffer, SansTypeface, scale_factor * scale);
+	TextEnd(pos_x, pos_y + 30, buffer, SansTypeface, scale);
+	
 }
 
 void draw_home_distance(int distance, int pos_x, int pos_y, float scale){
@@ -444,9 +428,14 @@ void draw_altitude(int alt, int pos_x, int pos_y, bool ladder_enabled, float sca
 	x[5] = x[0];
 	y[5] = y[0];
 	Polyline(x, y, 6);
-	Fill(255,255,255,0.5f);
+	/*Fill(255,255,255,0);
 	Polygon(x, y, 6);
-	Fill(0,0,0,1);
+	Fill(0,0,0,1);*/
+
+	Fill(0xff,0xff,0xff,1);
+	Stroke(0,0,0,1);
+	StrokeWidth(1);
+
 	sprintf(buffer, "%d", alt);
 	TextMid(pos_x_r + s_width / 2 + s_width / 5, pos_y - scale_factor * scale / 2, buffer, SansTypeface, scale_factor * scale);
 
@@ -525,9 +514,14 @@ void draw_speed(int speed, int pos_x, int pos_y, bool ladder_enabled, float scal
 	x[5] = x[0];
 	y[5] = y[0];
 	Polyline(x, y, 6);
-	Fill(255,255,255,0.5f);
+	/*Fill(255,255,255,0.5f);
 	Polygon(x, y, 6);
-	Fill(0,0,0,1);
+	Fill(0,0,0,1);*/
+	
+	Fill(0xff,0xff,0xff,1);
+	Stroke(0,0,0,1);
+	StrokeWidth(1);
+
 	sprintf(buffer, "%d", speed);
 	TextMid(pos_x_l - s_width / 2 - s_width / 5, pos_y - scale_factor * scale / 2, buffer, SansTypeface, scale_factor * scale);
 	

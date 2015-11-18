@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 
 	long long prev_time = current_timestamp();
 	while(1) {
-		n = read(STDIN_FILENO, buf, sizeof(buf));
+		/*n = read(STDIN_FILENO, buf, sizeof(buf));
 
 		if(n == 0) {
 		//	break; //EOF
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 			if (!frsky_parse_buffer(&fs, &td, buf, n)){
 				continue;
 			}
-		}
+		}*/
 
 		//only draw with 5hz as data is not coming in faster anyways
 		if (current_timestamp() > prev_time + 199){
