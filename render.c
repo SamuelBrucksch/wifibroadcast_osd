@@ -21,6 +21,7 @@ int mid_y, mid_x;
 //set to 1 or -1
 #define INVERT_ROLL 1
 #define INVERT_PITCH 1
+#define INVERT_HOME_ARROW -1
 
 //packet based rssi, uncomment to disable
 //not implemented yet
@@ -73,9 +74,6 @@ void render_init() {
 	scale_factor = width/170;
 	home_counter = 0;
 
-	home_lat = 49.0068901;
-	home_lon =  8.4036527;
-
 }
 
 /*long old_blocks = 0;
@@ -83,8 +81,6 @@ long old_defective = 0;
 float smooth_rssi[3];
 uint8_t pointer = 0; */
 void render(telemetry_data_t *td) {
-	td->latitude = 48.96186924;
-	td->longitude = 8.52191757;
 	Start(width, height);
 #ifdef ALT
 	draw_altitude(td->altitude, getWidth(60), getHeight(50), DRAW_ALT_LADDER, 3);
@@ -248,6 +244,10 @@ void draw_signal(int8_t signal, int package_rssi, int pos_x, int pos_y, float sc
 
 void paintArrow(int heading, int pos_x, int pos_y){
 	if (heading == 360) heading = 0;
+
+#if INVERT_HOME_ARROW == -1
+	heading = 360 - heading;
+#endif
 	
 	//offset for arrow, so middle of the arrow is at given position
 	pos_x -= 20;
