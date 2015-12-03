@@ -17,7 +17,16 @@ Most of the steps should be the same. **Requires latest wifibroadcast version**
 ```
 -1 for reversed and 1 for normal.
 
-2) The home arrow might move into the wrong direction. This can be fixed by changing this part in render.c
+2) Roll and pitch might be exchanged. So when roll angle changes it shows AHI change on pitch. This can be exchanged by uncommenting EXCHANGE_ROLL_AND_PITCH:
+```
+//#define EXCHANGE_ROLL_AND_PITCH
+```
+to
+```
+#define EXCHANGE_ROLL_AND_PITCH
+```
+
+3) The home arrow might move into the wrong direction. This can be fixed by changing this part in render.c
 ```
 //set to 1 or -1
 #define INVERT_HOME_ARROW 1
