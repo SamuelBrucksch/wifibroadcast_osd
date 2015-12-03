@@ -23,6 +23,9 @@ int mid_y, mid_x;
 #define INVERT_PITCH 1
 #define INVERT_HOME_ARROW -1
 
+//uncomment if roll and pitch are exchanged
+//#define EXCHANGE_ROLL_AND_PITCH
+
 //packet based rssi, uncomment to disable
 //not implemented yet
 //#define PACKET_BASED_RSSI
@@ -155,7 +158,13 @@ void render(telemetry_data_t *td) {
     	z_val = td->z;
 
 	//draw_horizon(TO_DEG * (atan(x_val / sqrt((y_val*y_val) + (z_val*z_val)))), TO_DEG * (atan(y_val / sqrt((x_val*x_val)+(z_val*z_val)))), getWidth(50), getHeight(50),true, 1.5f);
+#ifdef EXCHANGE_ROLL_AND_PITCH
+	paintAHI(INVERT_ROLL * TO_DEG * (atan(y_val / sqrt((x_val*x_val) + (z_val*z_val)))), INVERT_PITCH * TO_DEG * (atan(x_val / sqrt((y_val*y_val)+(z_val*z_val)))));
+#elif
 	paintAHI(INVERT_ROLL * TO_DEG * (atan(x_val / sqrt((y_val*y_val) + (z_val*z_val)))), INVERT_PITCH * TO_DEG * (atan(y_val / sqrt((x_val*x_val)+(z_val*z_val)))));
+#endif
+
+	
 	#elif defined(MAVLINK)
 
 	#elif defined(LTM)
