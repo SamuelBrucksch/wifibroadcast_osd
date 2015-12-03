@@ -17,9 +17,11 @@ Most of the steps should be the same. **Requires latest wifibroadcast version**
 ```
 -1 for reversed and 1 for normal.
 
-2) The home arrow currently does not point to home, but shows the heading (like a compass). This will be changed once home distance and so on is implemented (see 3).
-
-3) Distance does not work yet as well as everything related to coordinates
+2) The home arrow might move into the wrong direction. This can be fixed by changing this part in render.c
+```
+//set to 1 or -1
+#define INVERT_HOME_ARROW 1
+```
 
 #Installation
 1) increase split memory for GPU in case it is not already 128MB
