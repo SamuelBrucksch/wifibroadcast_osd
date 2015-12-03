@@ -83,13 +83,16 @@ uint8_t pointer = 0; */
 void render(telemetry_data_t *td) {
 	Start(width, height);
 #ifdef ALT
-	draw_altitude(td->altitude, getWidth(60), getHeight(50), DRAW_ALT_LADDER, 3);
+	if (home_set)
+		draw_altitude(td->altitude, getWidth(60), getHeight(50), DRAW_ALT_LADDER, 3);
 #endif
 #ifdef SPEED
-	draw_speed((int)td->speed, getWidth(40), getHeight(50), DRAW_SPEED_LADDER, 3);
+	if (home_set)
+		draw_speed((int)td->speed, getWidth(40), getHeight(50), DRAW_SPEED_LADDER, 3);
 #endif
 #ifdef HOME_ARROW
-	paintArrow((int)course_to(home_lat, home_lon, td->latitude, td->longitude), getWidth(50), getHeight(84));
+	if (home_set)
+		paintArrow((int)course_to(home_lat, home_lon, td->latitude, td->longitude), getWidth(50), getHeight(84));
 #endif
 #ifdef HEADING
 	draw_compass(td->heading, getWidth(50), getHeight(89), DRAW_COURSE_LADDER, 3);
@@ -160,7 +163,8 @@ void render(telemetry_data_t *td) {
 	#endif
 #endif
 #ifdef DISTANCE
-	draw_home_distance((int)distance_between(home_lat, home_lon, td->latitude, td->longitude), getWidth(50), getHeight(5), scale_factor * 2.5);
+	if (home_set)
+		draw_home_distance((int)distance_between(home_lat, home_lon, td->latitude, td->longitude), getWidth(50), getHeight(5), scale_factor * 2.5);
 #endif
 	End();
 }
