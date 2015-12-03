@@ -37,6 +37,8 @@ void rotatePoints(float *x, float *y, int angle, int points, int center_x, int c
 void paintArrow(int heading, int pos_x, int pos_y);
 void paintAHI(int hor_angle, int ver_angle);
 void draw_signal(int8_t signal, int package_rssi, int pos_x, int pos_y, float scale);
+float distance_between(float lat1, float long1, float lat2, float long2);
+float course_to (float lat1, float long1, float lat2, float long2);
 
 //new stuff from fritz walter https://www.youtube.com/watch?v=EQ01b3aJ-rk
 //this will only indicate how much % are left. Mavlink specific, but could be used with others as well.

@@ -36,6 +36,14 @@ int mid_y, mid_x;
 #define SPEED
 #define POSITION
 #define HORIZON
+#define DISTANCE
+
+bool setting_home;
+bool home_set;
+float home_lat;
+float home_lon;
+int home_counter;
+
 
 /* #### Protocol ####
  *
@@ -63,6 +71,11 @@ void render_init() {
         mid_y = height/2;
 	
 	scale_factor = width/170;
+	home_counter = 0;
+
+	home_lat = 49.0068901;
+	home_lon =  8.4036527;
+
 }
 
 /*long old_blocks = 0;
@@ -70,18 +83,20 @@ long old_defective = 0;
 float smooth_rssi[3];
 uint8_t pointer = 0; */
 void render(telemetry_data_t *td) {
+	td->latitude = 48.96186924;
+	td->longitude = 8.52191757;
 	Start(width, height);
 #ifdef ALT
-	draw_altitude(td->altitude, getWidth(60), getHeight(50), DRAW_ALT_LADDER, 1.5);
+	draw_altitude(td->altitude, getWidth(60), getHeight(50), DRAW_ALT_LADDER, 3);
 #endif
 #ifdef SPEED
-	draw_speed((int)td->speed, getWidth(40), getHeight(50), DRAW_SPEED_LADDER, 1.5);
+	draw_speed((int)td->speed, getWidth(40), getHeight(50), DRAW_SPEED_LADDER, 3);
 #endif
 #ifdef HOME_ARROW
-	paintArrow((int)td->heading, getWidth(50), getHeight(84));
+	paintArrow((int)course_to(home_lat, home_lon, td->latitude, td->longitude), getWidth(50), getHeight(84));
 #endif
 #ifdef HEADING
-	draw_compass(td->heading, getWidth(50), getHeight(89), DRAW_COURSE_LADDER, 2);
+	draw_compass(td->heading, getWidth(50), getHeight(89), DRAW_COURSE_LADDER, 3);
 #endif
 #ifdef RSSI
 	if(td->rx_status != NULL) {
@@ -99,11 +114,11 @@ void render(telemetry_data_t *td) {
 
 		//old_defective = t->damaged_block_cnt;
 		//old_blocks = t->received_block_cnt;
-		draw_signal(best_dbm, 0/*(int)((smooth_rssi[0] + smooth_rssi[1] + smooth_rssi[2])/3.0f)*/, getWidth(20), getHeight(90), scale_factor*2);
+		draw_signal(best_dbm, 0/*(int)((smooth_rssi[0] + smooth_rssi[1] + smooth_rssi[2])/3.0f)*/, getWidth(20), getHeight(90), scale_factor*3);
 	}
 #endif
 #ifdef BATT_STATUS
-	draw_bat_status(td->voltage, 0.0f, getWidth(20), getHeight(5), scale_factor * 2);
+	draw_bat_status(td->voltage, 0.0f, getWidth(20), getHeight(5), scale_factor * 2.5);
 #endif
 #ifdef BATT_REMAINING
 	draw_bat_remaining(((td->voltage/CELLS)-CELL_MIN)/(CELL_MAX-CELL_MIN)*100, getWidth(10), getHeight(90), 3);
@@ -112,10 +127,22 @@ void render(telemetry_data_t *td) {
 	#if defined(FRSKY)
 	//we assume that if we get the NS and EW values from frsky protocol, that we have a fix
 	if ((td->ew == 'E' || td->ew == 'W') && (td->ns == 'N' || td->ns == 'S')){
-		draw_position((td->ns == 'N'? 1:-1) * td->latitude, (td->ew == 'E'? 1:-1) * td->longitude, true, getWidth(85), getHeight(5), scale_factor*2);
+		setting_home = true;
+		draw_position((td->ns == 'N'? 1:-1) * td->latitude, (td->ew == 'E'? 1:-1) * td->longitude, true, getWidth(85), getHeight(5), scale_factor*2.5);
 	}else{
 		//no fix
-		draw_position((td->ns == 'N'? 1:-1) * td->latitude, (td->ew == 'E'? 1:-1) * td->longitude, false, getWidth(85), getHeight(5), scale_factor*2);
+		setting_home = false;
+		home_counter = 0;
+		draw_position((td->ns == 'N'? 1:-1) * td->latitude, (td->ew == 'E'? 1:-1) * td->longitude, false, getWidth(85), getHeight(5), scale_factor*2.5);
+	}
+	
+	//if 10 packages after each other have a fix automatically set home
+	if (setting_home && !home_set){
+		if (++home_counter == 10){
+			home_set = true;
+			home_lat = (td->ns == 'N'? 1:-1) * td->latitude;
+			home_lon = (td->ew == 'E'? 1:-1) * td->longitude;
+		}
 	}
 	#elif defined(MAVLINK)
 
@@ -136,8 +163,58 @@ void render(telemetry_data_t *td) {
 
 	#endif
 #endif
+#ifdef DISTANCE
+	draw_home_distance((int)distance_between(home_lat, home_lon, td->latitude, td->longitude), getWidth(50), getHeight(5), scale_factor * 2.5);
+#endif
 	End();
 }
+
+//taken from tinygps: https://github.com/mikalhart/TinyGPS/blob/master/TinyGPS.cpp#L296
+float distance_between(float lat1, float long1, float lat2, float long2) {
+  // returns distance in meters between two positions, both specified 
+  // as signed decimal-degrees latitude and longitude. Uses great-circle 
+  // distance computation for hypothetical sphere of radius 6372795 meters.
+  // Because Earth is no exact sphere, rounding errors may be up to 0.5%.
+  // Courtesy of Maarten Lamers
+  float delta = (long1-long2)*0.017453292519;
+  float sdlong = sin(delta);
+  float cdlong = cos(delta);
+  lat1 = (lat1)*0.017453292519;
+  lat2 = (lat2)*0.017453292519;
+  float slat1 = sin(lat1);
+  float clat1 = cos(lat1);
+  float slat2 = sin(lat2);
+  float clat2 = cos(lat2);
+  delta = (clat1 * slat2) - (slat1 * clat2 * cdlong); 
+  delta = delta*delta; 
+  delta += (clat2 * sdlong)*(clat2 * sdlong); 
+  delta = sqrt(delta); 
+  float denom = (slat1 * slat2) + (clat1 * clat2 * cdlong); 
+  delta = atan2(delta, denom); 
+  return delta * 6372795; 
+}
+
+//taken from tinygps: https://github.com/mikalhart/TinyGPS/blob/master/TinyGPS.cpp#L321
+float course_to (float lat1, float long1, float lat2, float long2) 
+{
+  // returns course in degrees (North=0, West=270) from position 1 to position 2,
+  // both specified as signed decimal-degrees latitude and longitude.
+  // Because Earth is no exact sphere, calculated course may be off by a tiny fraction.
+  // Courtesy of Maarten Lamers
+  float dlon = (long2-long1)*0.017453292519;
+  lat1 = (lat1)*0.017453292519;
+  lat2 = (lat2)*0.017453292519;
+  float a1 = sin(dlon) * cos(lat2);
+  float a2 = sin(lat1) * cos(lat2) * cos(dlon);
+  a2 = cos(lat1) * sin(lat2) - a2;
+  a2 = atan2(a1, a2);
+  if (a2 < 0.0)
+  {
+    a2 += M_PI*2;
+  }
+  return TO_DEG*(a2);
+}
+
 
 void rotatePoints(float *x, float *y, int angle, int points, int center_x, int center_y){
 	double cosAngle = cos(-angle * 0.017453292519);
@@ -380,8 +457,11 @@ void draw_position(float lat, float lon, bool fix, int pos_x, int pos_y, float s
 }
 
 void draw_home_distance(int distance, int pos_x, int pos_y, float scale){
-	sprintf(buffer, "%5dm", distance);
-	TextMid(pos_x, pos_y, buffer, SansTypeface, scale_factor * scale);
+	Fill(0xff,0xff,0xff,1);
+	Stroke(0,0,0,1);
+	StrokeWidth(1);
+	sprintf(buffer, "%05dm", distance);
+	TextMid(pos_x, pos_y, buffer, SansTypeface, scale);
 }
 
 //autopilot mode, mavlink specific, could be used if mode is in telemetry data of other protocols as well
