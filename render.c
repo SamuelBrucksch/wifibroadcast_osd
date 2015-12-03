@@ -160,7 +160,7 @@ void render(telemetry_data_t *td) {
 	//draw_horizon(TO_DEG * (atan(x_val / sqrt((y_val*y_val) + (z_val*z_val)))), TO_DEG * (atan(y_val / sqrt((x_val*x_val)+(z_val*z_val)))), getWidth(50), getHeight(50),true, 1.5f);
 #ifdef EXCHANGE_ROLL_AND_PITCH
 	paintAHI(INVERT_ROLL * TO_DEG * (atan(y_val / sqrt((x_val*x_val) + (z_val*z_val)))), INVERT_PITCH * TO_DEG * (atan(x_val / sqrt((y_val*y_val)+(z_val*z_val)))));
-#elif
+#else
 	paintAHI(INVERT_ROLL * TO_DEG * (atan(x_val / sqrt((y_val*y_val) + (z_val*z_val)))), INVERT_PITCH * TO_DEG * (atan(y_val / sqrt((x_val*x_val)+(z_val*z_val)))));
 #endif
 
