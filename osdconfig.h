@@ -7,6 +7,8 @@
 #define CELL_WARNING1 3.80
 //warning level 2 -> red, critical
 #define CELL_WARNING2 3.60
+//TODO not working yet
+#define DRAW_CURRENT false
 
 /** ARTIFICIAL HORIZON **/
 //set to 1 or -1
@@ -27,7 +29,6 @@
 //on raspi 1 it is not recommended to use the ladders as it might reduce performance and cause artefacts in the video due too much load
 #define DRAW_ALT_LADDER false
 #define DRAW_SPEED_LADDER false
-#define DRAW_CURRENT false
 #define DRAW_COURSE_LADDER false
 
 /** OSD ELEMENTS **/
