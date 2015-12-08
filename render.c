@@ -1,62 +1,19 @@
 #include <stdint.h>
 #include "render.h"
 #include "telemetry.h"
+#include "osdconfig.h"
 
 int width, height;
-const float MIN_VOLTAGE = 10.5;
-#define CELLS 3
-#define CELL_MAX 4.20
-#define CELL_MIN 3.00
-
-//positioning of objects, could be exchanged with configurable interface later
-#define VOLT_X 90
-#define VOLT_Y 50
-int mid_y, mid_x;
-#define FONT_SIZE 40
-#define DRAW_ALT_LADDER false
-#define DRAW_SPEED_LADDER false
-#define DRAW_CURRENT false
-#define DRAW_COURSE_LADDER false
-
-//set to 1 or -1
-#define INVERT_ROLL 1
-#define INVERT_PITCH 1
-#define INVERT_HOME_ARROW -1
-
-//uncomment if roll and pitch are exchanged
-//#define EXCHANGE_ROLL_AND_PITCH
-
-//packet based rssi, uncomment to disable
-//not implemented yet
-//#define PACKET_BASED_RSSI
-
-//comment to disable feature
-#define RSSI
-#define HEADING
-#define HOME_ARROW
-#define BATT_REMAINING
-#define BATT_STATUS
-#define ALT
-#define SPEED
-#define POSITION
-#define HORIZON
-#define DISTANCE
+#define TO_FEET 3.28084
+#define TO_MPH 0.621371
+#define CELL_WARNING_PCT1 (CELL_WARNING1-CELL_MIN)/(CELL_MAX-CELL_MIN)*100
+#define CELL_WARNING_PCT2 (CELL_WARNING2-CELL_MIN)/(CELL_MAX-CELL_MIN)*100
 
 bool setting_home;
 bool home_set;
 float home_lat;
 float home_lon;
 int home_counter;
-
-
-/* #### Protocol ####
- *
- *  FRSKY -> Frsky protocoll
- *  MAVLINK -> Mavlink protocol (APM/Pixhawk/...)
- *  GPS -> direct NMEA input
- */
-#define FRSKY
-
 char buffer[50];
 
 int getWidth(float pos_x_percent) {
@@ -71,13 +28,12 @@ int scale_factor;
 
 void render_init() {
         init(&width, &height);
-        mid_x = width/2;
-        mid_y = height/2;
 	
 	scale_factor = width/170;
 	home_counter = 0;
-
 }
+
+
 
 /*long old_blocks = 0;
 long old_defective = 0;
@@ -123,8 +79,10 @@ void render(telemetry_data_t *td) {
 	draw_bat_status(td->voltage, 0.0f, getWidth(20), getHeight(5), scale_factor * 2.5);
 #endif
 #ifdef BATT_REMAINING
+	#if defined(FRSKY)
 	draw_bat_remaining(((td->voltage/CELLS)-CELL_MIN)/(CELL_MAX-CELL_MIN)*100, getWidth(10), getHeight(90), 3);
-#endif
+	#endif
+#endif 
 #ifdef POSITION
 	#if defined(FRSKY)
 	//we assume that if we get the NS and EW values from frsky protocol, that we have a fix
@@ -286,12 +244,14 @@ void paintAHI(int hor_angle, int ver_angle){
 
 	int offset_x = (width / 6 * cos(hor_angle * 0.017453292519));
 	int offset_y = (width / 6 * sin(hor_angle * 0.017453292519));
-
+	
+	int mid_y = getHeight(50);
 	int horizon_y = (mid_y - 100) / 45 * ver_angle + mid_y;
 
 	Stroke(0,0,0,1);
 	StrokeWidth(5);
 	//outer black border
+	int mid_x = getWidth(50);
 	Line(mid_x - offset_x,horizon_y - offset_y, mid_x + offset_x, horizon_y + offset_y);
 	Stroke(0xff,0xff,0xff,1);
 	StrokeWidth(2);
@@ -303,6 +263,7 @@ void paintAHI(int hor_angle, int ver_angle){
 void draw_bat_remaining(int remaining, int pos_x, int pos_y, float scale){
 	//prevent black empty indicator to draw left to battery
 	if (remaining < 0) remaining = 0;
+	else if (remaining > 100) remaining = 100;
 
 	int s_width = 20 * scale;
 	int s_height = 10 * scale;
@@ -311,7 +272,14 @@ void draw_bat_remaining(int remaining, int pos_x, int pos_y, float scale){
 	int plus_h = 5 * scale;
 	int stroke = 1 * scale;
 
-	Fill(255, 255, 255, 1);
+	if (remaining <= CELL_WARNING_PCT1 && remaining > CELL_WARNING_PCT2){
+		Fill(255,165, 0, 1);
+	}else if (remaining <= CELL_WARNING_PCT2){
+		Fill(255,0, 0, 1);
+	}else{
+		Fill(255, 255, 255, 1);
+	}
+	
 	Stroke(0,0,0,1);
 	StrokeWidth(1);
 	Roundrect(pos_x, pos_y , s_width, s_height, corner, corner);
@@ -473,7 +441,11 @@ void draw_home_distance(int distance, int pos_x, int pos_y, float scale){
 	Fill(0xff,0xff,0xff,1);
 	Stroke(0,0,0,1);
 	StrokeWidth(1);
+#ifdef IMPERIAL
+	sprintf(buffer, "%05dft", (int)(distance*TO_FEET));
+#else
 	sprintf(buffer, "%05dm", distance);
+#endif
 	TextMid(pos_x, pos_y, buffer, SansTypeface, scale);
 }
 
@@ -548,6 +520,10 @@ void draw_altitude(int alt, int pos_x, int pos_y, bool ladder_enabled, float sca
 	Fill(0xff,0xff,0xff,1);
 	Stroke(0,0,0,1);
 	StrokeWidth(1);
+
+#ifdef IMPERIAL
+	alt = (int)(alt * TO_FEET);
+#endif
 
 	sprintf(buffer, "%d", alt);
 	TextMid(pos_x_r + s_width / 2 + s_width / 5, pos_y - scale_factor * scale / 2, buffer, SansTypeface, scale_factor * scale);
@@ -634,7 +610,9 @@ void draw_speed(int speed, int pos_x, int pos_y, bool ladder_enabled, float scal
 	Fill(0xff,0xff,0xff,1);
 	Stroke(0,0,0,1);
 	StrokeWidth(1);
-
+#ifdef IMPERIAL
+	speed = speed*TO_MPH;
+#endif
 	sprintf(buffer, "%d", speed);
 	TextMid(pos_x_l - s_width / 2 - s_width / 5, pos_y - scale_factor * scale / 2, buffer, SansTypeface, scale_factor * scale);
 	
