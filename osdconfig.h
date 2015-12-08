@@ -24,6 +24,7 @@
 
 /** DETAILS **/
 //set to true if you want to show the ladders
+//on raspi 1 it is not recommended to use the ladders as it might reduce performance and cause artefacts in the video due too much load
 #define DRAW_ALT_LADDER false
 #define DRAW_SPEED_LADDER false
 #define DRAW_CURRENT false
