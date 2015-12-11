@@ -41,20 +41,23 @@ float smooth_rssi[3];
 uint8_t pointer = 0; */
 void render(telemetry_data_t *td) {
 	Start(width, height);
+	home_set = true;
+	td->speed += 1;
+	td->altitude += 1;
 #ifdef ALT
 	if (home_set)
-		draw_altitude(td->altitude, getWidth(60), getHeight(50), DRAW_ALT_LADDER, 3);
+		draw_altitude(td->altitude, getWidth(60), getHeight(50), DRAW_ALT_LADDER, 2);
 #endif
 #ifdef SPEED
 	if (home_set)
-		draw_speed((int)td->speed, getWidth(40), getHeight(50), DRAW_SPEED_LADDER, 3);
+		draw_speed((int)td->speed, getWidth(40), getHeight(50), DRAW_SPEED_LADDER, 2);
 #endif
 #ifdef HOME_ARROW
 	if (home_set)
-		paintArrow((int)course_to(home_lat, home_lon, td->latitude, td->longitude), getWidth(50), getHeight(84));
+		paintArrow((int)course_to(td->latitude, td->longitude, home_lat, home_lon), getWidth(50), getHeight(80));
 #endif
 #ifdef HEADING
-	draw_compass(td->heading, getWidth(50), getHeight(89), DRAW_COURSE_LADDER, 3);
+	draw_compass(td->heading, getWidth(50), getHeight(89), DRAW_COURSE_LADDER, 1.5);
 #endif
 #ifdef RSSI
 	if(td->rx_status != NULL) {
@@ -108,6 +111,10 @@ void render(telemetry_data_t *td) {
 
 	#endif
 #endif
+#ifdef DISTANCE
+	if (home_set)
+		draw_home_distance((int)distance_between(home_lat, home_lon, td->latitude, td->longitude), getWidth(50), getHeight(5), scale_factor * 2.5);
+#endif
 #ifdef HORIZON
 	#if defined(FRSKY)
 	float x_val, y_val, z_val;
@@ -117,9 +124,18 @@ void render(telemetry_data_t *td) {
 
 	//draw_horizon(TO_DEG * (atan(x_val / sqrt((y_val*y_val) + (z_val*z_val)))), TO_DEG * (atan(y_val / sqrt((x_val*x_val)+(z_val*z_val)))), getWidth(50), getHeight(50),true, 1.5f);
 #ifdef EXCHANGE_ROLL_AND_PITCH
+#if DRAW_AHI_LADDER == true
+	draw_horizon(INVERT_ROLL * TO_DEG * (atan(y_val / sqrt((x_val*x_val) + (z_val*z_val)))), INVERT_PITCH * TO_DEG * (atan(x_val / sqrt((y_val*y_val)+(z_val*z_val)))), getWidth(50), getHeight(50), 1.5f);
+#else
 	paintAHI(INVERT_ROLL * TO_DEG * (atan(y_val / sqrt((x_val*x_val) + (z_val*z_val)))), INVERT_PITCH * TO_DEG * (atan(x_val / sqrt((y_val*y_val)+(z_val*z_val)))));
+#endif
+#else
+#if DRAW_AHI_LADDER == true
+	//draw_horizon(10, 15, getWidth(50), getHeight(50), 1.5f);
+	draw_horizon((int)(INVERT_ROLL * TO_DEG * (atan(y_val / sqrt((x_val*x_val) + (z_val*z_val))))), (int)( INVERT_PITCH * TO_DEG * (atan(x_val / sqrt((y_val*y_val)+(z_val*z_val))))), getWidth(50), getHeight(50), 1.5f);
 #else
 	paintAHI(INVERT_ROLL * TO_DEG * (atan(x_val / sqrt((y_val*y_val) + (z_val*z_val)))), INVERT_PITCH * TO_DEG * (atan(y_val / sqrt((x_val*x_val)+(z_val*z_val)))));
+#endif
 #endif
 
 	
@@ -128,10 +144,6 @@ void render(telemetry_data_t *td) {
 	#elif defined(LTM)
 
 	#endif
-#endif
-#ifdef DISTANCE
-	if (home_set)
-		draw_home_distance((int)distance_between(home_lat, home_lon, td->latitude, td->longitude), getWidth(50), getHeight(5), scale_factor * 2.5);
 #endif
 	End();
 }
@@ -216,7 +228,7 @@ void draw_signal(int8_t signal, int package_rssi, int pos_x, int pos_y, float sc
 void paintArrow(int heading, int pos_x, int pos_y){
 	if (heading == 360) heading = 0;
 
-#if INVERT_HOME_ARROW == -1
+#ifdef INVERT_HOME_ARROW
 	heading = 360 - heading;
 #endif
 	
@@ -298,8 +310,13 @@ void draw_compass(int heading, int pos_x, int pos_y, bool ladder_enabled, float 
 	if (!ladder_enabled){
 		pos_y += 20*scale;
 	}
-	StrokeWidth(2);
+	StrokeWidth(5);
 	Stroke(0,0,0,1);
+	Fill(255,255,255,0);
+	Rect(pos_x - width_number / 2, pos_y - height_number/2 , width_number, height_number);
+
+	StrokeWidth(2);
+	Stroke(0xff,0xff,0xff,1);
 	Fill(255,255,255,0);
 	Rect(pos_x - width_number / 2, pos_y - height_number/2 , width_number, height_number);
 
@@ -308,7 +325,7 @@ void draw_compass(int heading, int pos_x, int pos_y, bool ladder_enabled, float 
 	Stroke(0,0,0,1);
 	StrokeWidth(1);
 	sprintf(buffer, "%3d\xb0", heading);
-	TextMid(pos_x, pos_y - height_number / 4, buffer, SansTypeface, height_number / 2);
+	TextMid(pos_x, pos_y - height_number / 4*1.5, buffer, SansTypeface, height_number / 2*1.5);
 
 	if (ladder_enabled){
 	int width_triangle = 20 * scale;
@@ -488,8 +505,6 @@ void draw_home_indicator(int home_angle, int pos_x, int pos_y, float scale){
 
 void draw_altitude(int alt, int pos_x, int pos_y, bool ladder_enabled, float scale){
 	// altitude label
-	StrokeWidth(2);
-	Stroke(0, 0, 0, 1);
 	int space = 20 * scale;
 	int s_width = 40 * scale;
 	int s_height = 180 * scale;
@@ -512,10 +527,14 @@ void draw_altitude(int alt, int pos_x, int pos_y, bool ladder_enabled, float sca
 	y[4] = y[3];
 	x[5] = x[0];
 	y[5] = y[0];
+	StrokeWidth(5);
+	Stroke(0, 0, 0, 1);
 	Polyline(x, y, 6);
-	/*Fill(255,255,255,0);
-	Polygon(x, y, 6);
-	Fill(0,0,0,1);*/
+
+	Stroke(0xff, 0xff, 0xff, 1);
+	StrokeWidth(2);
+	Polyline(x, y, 6);
+
 
 	Fill(0xff,0xff,0xff,1);
 	Stroke(0,0,0,1);
@@ -526,7 +545,9 @@ void draw_altitude(int alt, int pos_x, int pos_y, bool ladder_enabled, float sca
 #endif
 
 	sprintf(buffer, "%d", alt);
-	TextMid(pos_x_r + s_width / 2 + s_width / 5, pos_y - scale_factor * scale / 2, buffer, SansTypeface, scale_factor * scale);
+	TextMid(pos_x_r + s_width / 2 + s_width / 5, pos_y - scale_factor * scale*1.5 / 2, buffer, SansTypeface, scale_factor * scale*1.5);
+
+	scale = 1.5;
 
 	if (ladder_enabled){
 		int width_ladder = 150 * scale;
@@ -568,7 +589,10 @@ void draw_altitude(int alt, int pos_x, int pos_y, bool ladder_enabled, float sca
 				StrokeWidth(2);
 				//inner white line
 				Line(px, y, px2, y);
-				Text(pos_x + width_ladder / 2 + distance + width_speed + space_text + 2 * length_bar, y - width / 600 * scale, buffer, SansTypeface, width / 300 * scale);
+				Fill(0xff,0xff,0xff,1);
+				Stroke(0,0,0,1);
+				StrokeWidth(0.4);
+				Text(pos_x + width_ladder / 2 + distance + width_speed + space_text + 2 * length_bar, y - width / 240 * scale, buffer, SansTypeface, width / 300 * scale*2.5);
 			}
 		}
 	}
@@ -602,10 +626,13 @@ void draw_speed(int speed, int pos_x, int pos_y, bool ladder_enabled, float scal
 	y[4] = y[3];
 	x[5] = x[0];
 	y[5] = y[0];
+	StrokeWidth(5);
+	Stroke(0, 0, 0, 1);
 	Polyline(x, y, 6);
-	/*Fill(255,255,255,0.5f);
-	Polygon(x, y, 6);
-	Fill(0,0,0,1);*/
+
+	Stroke(0xff, 0xff, 0xff, 1);
+	StrokeWidth(2);
+	Polyline(x, y, 6);
 	
 	Fill(0xff,0xff,0xff,1);
 	Stroke(0,0,0,1);
@@ -614,8 +641,9 @@ void draw_speed(int speed, int pos_x, int pos_y, bool ladder_enabled, float scal
 	speed = speed*TO_MPH;
 #endif
 	sprintf(buffer, "%d", speed);
-	TextMid(pos_x_l - s_width / 2 - s_width / 5, pos_y - scale_factor * scale / 2, buffer, SansTypeface, scale_factor * scale);
+	TextMid(pos_x_l - s_width / 2 - s_width / 5, pos_y - scale_factor * scale*1.5 / 2, buffer, SansTypeface, scale_factor * scale*1.5);
 	
+	scale = 1.5;
 	if (ladder_enabled){
 		//ladder speed
 		int width_ladder = 150 * scale;
@@ -657,15 +685,18 @@ void draw_speed(int speed, int pos_x, int pos_y, bool ladder_enabled, float scal
 				StrokeWidth(2);
 				//inner white line
 				Line(px, y, px2, y);
-				if (k >= 0)
-					TextEnd(pos_x - width_ladder / 2 - distance - width_speed - space_text - 2 * length_bar, y - width / 600 * scale, buffer, SansTypeface, width / 300 * scale);
+				if (k >= 0){
+					Fill(0xff,0xff,0xff,1);
+					Stroke(0,0,0,1);
+					StrokeWidth(0.4);			
+					TextEnd(pos_x - width_ladder / 2 - distance - width_speed - space_text - 2 * length_bar, y - width / 240 * scale, buffer, SansTypeface, width / 300 * scale*2.5);
+				}
 			}
 		}
 	}
 }
 
-//ladder here means the additional lines of the AHI, if true all lines will be drawn, if false only the main line
-void draw_horizon(float roll, float pitch, int pos_x, int pos_y, bool ladder_enabled, float scale){
+void draw_horizon(float roll, float pitch, int pos_x, int pos_y, float scale){
 	StrokeWidth(2);
 	Stroke(255, 255, 255, 1);
 	int height_ladder = 300 * scale;
@@ -687,8 +718,11 @@ void draw_horizon(float roll, float pitch, int pos_x, int pos_y, bool ladder_ena
 		int y = pos_y + (k - pitch) * ratio;
 		sprintf(buffer, "%d", k);
 		if (k % 5 == 0 && k!= 0) {
-			TextEnd(pos_x - width_ladder / 2 - space_text, y - width / 600 * scale, buffer, SansTypeface, width / 300 * scale);
-			Text(pos_x + width_ladder / 2 + space_text, y - width / 600 * scale, buffer, SansTypeface, width / 300 * scale);
+			Fill(0xff,0xff,0xff,1);
+			Stroke(0,0,0,1);
+			StrokeWidth(0.4);
+			TextEnd(pos_x - width_ladder / 2 - space_text, y - width / 300 * scale, buffer, SansTypeface, width / 300 * scale*2);
+			Text(pos_x + width_ladder / 2 + space_text, y - width / 300 * scale, buffer, SansTypeface, width / 300 * scale*2);
 		}
 		if ((k > 0) && (k % 5 == 0)) {
 			int px = pos_x - width_ladder / 2;
@@ -698,36 +732,16 @@ void draw_horizon(float roll, float pitch, int pos_x, int pos_y, bool ladder_ena
 			StrokeWidth(5);
 			//outer black border
 			Line(px, y, px + width_ladder / 3, y);
+			Line(px, y, px, y - pike);
+			Line(px + width_ladder * 2 / 3, y, px2, y);
+			Line(px2, y, px2, y - pike);
+
 			Stroke(0xff,0xff,0xff,1);
 			StrokeWidth(2);
 			//inner white line
 			Line(px, y, px + width_ladder / 3, y);
-
-			Stroke(0,0,0,1);
-			StrokeWidth(5);
-			//outer black border
 			Line(px, y, px, y - pike);
-			Stroke(0xff,0xff,0xff,1);
-			StrokeWidth(2);
-			//inner white line
-			Line(px, y, px, y - pike);
-
-			Stroke(0,0,0,1);
-			StrokeWidth(5);
-			//outer black border
 			Line(px + width_ladder * 2 / 3, y, px2, y);
-			Stroke(0xff,0xff,0xff,1);
-			StrokeWidth(2);
-			//inner white line
-			Line(px + width_ladder * 2 / 3, y, px2, y);
-
-			Stroke(0,0,0,1);
-			StrokeWidth(5);
-			//outer black border
-			Line(px2, y, px2, y - pike);
-			Stroke(0xff,0xff,0xff,1);
-			StrokeWidth(2);
-			//inner white line
 			Line(px2, y, px2, y - pike);
 		} else if ((k < 0) && (k % 5 == 0)) {
 			int px = pos_x - width_ladder / 2 +width_ladder / 3;
@@ -743,36 +757,16 @@ void draw_horizon(float roll, float pitch, int pos_x, int pos_y, bool ladder_ena
 			StrokeWidth(5);
 			//outer black border
 			Line(px, y, px2, y);
+			Line(px3, y, px4, y);
+			Line(px5, y, px6, y);
+			Line(px6, y, px6, y + pike);
+
 			Stroke(0xff,0xff,0xff,1);
 			StrokeWidth(2);
 			//inner white line
 			Line(px, y, px2, y);
-
-			Stroke(0,0,0,1);
-			StrokeWidth(5);
-			//outer black border
-			Line(px3, y, px4, y);
-			Stroke(0xff,0xff,0xff,1);
-			StrokeWidth(2);
-			//inner white line
 			Line(px3, y, px4, y);		
-
-			Stroke(0,0,0,1);
-			StrokeWidth(5);
-			//outer black border
-			Line(px5, y, px6, y);
-			Stroke(0xff,0xff,0xff,1);
-			StrokeWidth(2);
-			//inner white line
 			Line(px5, y, px6, y);	
-
-			Stroke(0,0,0,1);
-			StrokeWidth(5);
-			//outer black border
-			Line(px6, y, px6, y + pike);
-			Stroke(0xff,0xff,0xff,1);
-			StrokeWidth(2);
-			//inner white line
 			Line(px6, y, px6, y + pike);
 
 			px = pos_x + width_ladder / 2 -  width_ladder / 3;
@@ -788,41 +782,23 @@ void draw_horizon(float roll, float pitch, int pos_x, int pos_y, bool ladder_ena
 			StrokeWidth(5);
 			//outer black border
 			Line(px, y, px2, y);
+			Line(px3, y, px4, y);
+			Line(px5, y, px6, y);
+			Line(px6, y, px6, y + pike);
+
 			Stroke(0xff,0xff,0xff,1);
 			StrokeWidth(2);
 			//inner white line
 			Line(px, y, px2, y);
-
-			Stroke(0,0,0,1);
-			StrokeWidth(5);
-			//outer black border
 			Line(px3, y, px4, y);
-			Stroke(0xff,0xff,0xff,1);
-			StrokeWidth(2);
-			//inner white line
-			Line(px3, y, px4, y);
-
-			Stroke(0,0,0,1);
-			StrokeWidth(5);
-			//outer black border
 			Line(px5, y, px6, y);
-			Stroke(0xff,0xff,0xff,1);
-			StrokeWidth(2);
-			//inner white line
-			Line(px5, y, px6, y);
-
-			Stroke(0,0,0,1);
-			StrokeWidth(5);
-			//outer black border
 			Line(px6, y, px6, y + pike);
-			Stroke(0xff,0xff,0xff,1);
-			StrokeWidth(2);
-			//inner white line
-			Line(px6, y, px6, y + pike);
-
 		} else if (k == 0) {
-			TextEnd(pos_x - width_ladder / 1.25f - space_text, y - width / 600 * scale, buffer, SansTypeface, width / 300 * scale);
-			Text(pos_x + width_ladder / 1.25f + space_text, y - width / 600 * scale, buffer, SansTypeface, width / 300 * scale);
+			Fill(0xff,0xff,0xff,1);
+			Stroke(0,0,0,1);
+			StrokeWidth(0.4);	
+			TextEnd(pos_x - width_ladder / 1.25f - space_text, y - width / 300 * scale, buffer, SansTypeface, width / 300 * scale*2);
+			Text(pos_x + width_ladder / 1.25f + space_text, y - width / 300 * scale, buffer, SansTypeface, width / 300 * scale*2);
 
 			Stroke(0,0,0,1);
 			StrokeWidth(5);
@@ -835,8 +811,4 @@ void draw_horizon(float roll, float pitch, int pos_x, int pos_y, bool ladder_ena
 		}
 		k++;
 	}
-
-	/*for (k = (int) (pitch - range / 2); k <= pitch + range / 2; k++){ 
-		
-	}*/
 }

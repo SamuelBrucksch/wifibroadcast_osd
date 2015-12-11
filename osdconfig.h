@@ -18,7 +18,8 @@
 //#define EXCHANGE_ROLL_AND_PITCH
 
 /** HOME ARROW **/
-#define INVERT_HOME_ARROW -1
+//uncomment if home arrow is pointing in the wrong direction
+//#define INVERT_HOME_ARROW
 
 /** UNITS**/
 //uncomment if you want to use imperial units
@@ -30,6 +31,7 @@
 #define DRAW_ALT_LADDER false
 #define DRAW_SPEED_LADDER false
 #define DRAW_COURSE_LADDER false
+#define DRAW_AHI_LADDER false
 
 /** OSD ELEMENTS **/
 //comment to disable feature

@@ -54,4 +54,4 @@ void draw_home_indicator(int home_angle, int pos_x, int pos_y, float scale);
 void draw_altitude(int alt, int pos_x, int pos_y, bool ladder_enabled, float scale);
 void draw_speed(int speed, int pos_x, int pos_y, bool ladder_enabled, float scale);
 //ladder here means the additional lines of the AHI, if true all lines will be drawn, if false only the main line
-void draw_horizon(float roll, float pitch, int pos_x, int pos_y, bool ladder_enabled, float scale);
+void draw_horizon(float roll, float pitch, int pos_x, int pos_y, float scale);
