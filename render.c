@@ -41,9 +41,6 @@ float smooth_rssi[3];
 uint8_t pointer = 0; */
 void render(telemetry_data_t *td) {
 	Start(width, height);
-	home_set = true;
-	td->speed += 1;
-	td->altitude += 1;
 #ifdef ALT
 	if (home_set)
 		draw_altitude(td->altitude, getWidth(60), getHeight(50), DRAW_ALT_LADDER, 2);
