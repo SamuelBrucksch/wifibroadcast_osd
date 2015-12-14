@@ -1,6 +1,7 @@
 #include "osdconfig.h"
 
 #ifdef LTM
+#include "telemetry.h"
 
 void ltm_read(telemetry_data_t *td, uint8_t *buf, int buflen);
 void ltm_check(telemetry_data_t *td);

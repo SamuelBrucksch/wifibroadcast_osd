@@ -39,7 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "telemetry.h"
 #ifdef FRSKY
 #include "frsky.h"
-#else if defined(LTM)
+#elif defined(LTM)
 #include "ltm.h"
 #endif
 #include "render.h"
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
 			}
 #ifdef FRSKY
 			frsky_parse_buffer(&fs, &td, buf, n);
-#else if defined(LTM)
+#elif defined(LTM)
 			ltm_read(&td, buf, n);
 #endif
 		}

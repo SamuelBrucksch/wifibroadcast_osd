@@ -54,8 +54,8 @@
  *
  * Only frsky is currently working
  */
-#define FRSKY
-//#define LTM
+//#define FRSKY
+#define LTM
 
 /** RSSI **/
 //packet based rssi, uncomment to disable

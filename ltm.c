@@ -14,7 +14,7 @@
  *     0x24 0x54 0x53 0xFF 0xFF  0xFF 0xFF    0xFF    0xFF      0xFF       0xC0     
  *      $     T   S   VBAT(mv)  Current(ma)   RSSI  AIRSPEED  ARM/FS/FMOD   CRC
  * ################################################################################################################# */
-#include "LightTelemetry.h"
+#include "ltm.h"
 #ifdef LTM
   static uint8_t LTMserialBuffer[LIGHTTELEMETRY_GFRAMELENGTH-4];
   static uint8_t LTMreceiverIndex;
@@ -53,7 +53,7 @@ c_state = IDLE;
 void ltm_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
   int i;
   for(i=0; i<buflen; ++i) {
-    uint8_t ch = buf[i];
+    uint8_t c = buf[i];
     if (c_state == IDLE) {
       c_state = (c=='$') ? HEADER_START1 : IDLE;
         //Serial.println("header $" );
@@ -91,10 +91,10 @@ void ltm_read(telemetry_data_t *td, uint8_t *buf, int buflen) {
 	  }
       if(LTMreceiverIndex == LTMframelength-4) {   // received checksum byte
         if(LTMrcvChecksum == 0) {
-	    telemetry_ok = true;
-            lastpacketreceived = millis();
-	    protocol = "LTM"; 
-            ltm_check(&td);
+	    	//telemetry_ok = 1;
+            	//TODO
+		//lastpacketreceived = millis();
+            ltm_check(td);
             c_state = IDLE;
         }
         else {                                                   // wrong checksum, drop packet
@@ -126,7 +126,7 @@ void ltm_check(telemetry_data_t *td) {
     td->pitch = (int16_t)ltmread_u16();
     td->roll =  (int16_t)ltmread_u16();
     td->heading = (float)((int16_t)ltmread_u16());
-    if (uav_heading < 0 ) uav_heading = uav_heading + 360; //convert from -180/180 to 0/360°
+    if (td->heading < 0 ) td->heading = td->heading + 360; //convert from -180/180 to 0/360°
     //memset(LTMserialBuffer, 0, LIGHTTELEMETRY_AFRAMELENGTH-4); 
   }else if (LTMcmd==LIGHTTELEMETRY_SFRAME)  {
     td->voltage = (float)ltmread_u16();
