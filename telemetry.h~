@@ -41,4 +41,7 @@ typedef struct {
 	wifibroadcast_rx_status_t *rx_status;	
 } telemetry_data_t;
 
+
 wifibroadcast_rx_status_t *telemetry_wbc_status_memory_open(void);
+
+
