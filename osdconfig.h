@@ -7,8 +7,6 @@
 #define CELL_WARNING1 3.80
 //warning level 2 -> red, critical
 #define CELL_WARNING2 3.60
-//TODO not working yet
-#define DRAW_CURRENT false
 
 /** ARTIFICIAL HORIZON **/
 //set to 1 or -1
@@ -19,7 +17,7 @@
 
 /** HOME ARROW **/
 //uncomment if home arrow is pointing in the wrong direction
-#define INVERT_HOME_ARROW
+//#define INVERT_HOME_ARROW
 
 /** UNITS**/
 //uncomment if you want to use imperial units
@@ -28,10 +26,10 @@
 /** DETAILS **/
 //set to true if you want to show the ladders
 //on raspi 1 it is not recommended to use the ladders as it might reduce performance and cause artefacts in the video due too much load
-#define DRAW_ALT_LADDER true
-#define DRAW_SPEED_LADDER true
-#define DRAW_COURSE_LADDER true
-#define DRAW_AHI_LADDER true
+#define DRAW_ALT_LADDER false
+#define DRAW_SPEED_LADDER false
+#define DRAW_COURSE_LADDER false
+#define DRAW_AHI_LADDER false
 
 /** OSD ELEMENTS **/
 //comment to disable feature
@@ -45,6 +43,7 @@
 #define POSITION
 #define HORIZON
 #define DISTANCE
+//#define DRAW_CURRENT
 
 /** PROTOCOL **/
 /* FRSKY -> Frsky protocoll

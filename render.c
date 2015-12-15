@@ -57,7 +57,7 @@ void render(telemetry_data_t *td) {
 		#ifdef FRSKY
 		paintArrow((int)course_to((td->ns == 'N'? 1:-1) *td->latitude, (td->ns == 'E'? 1:-1) *td->longitude, home_lat, home_lon), getWidth(50), getHeight(80));
 		#elif defined(LTM)
-		 paintArrow((int)course_to(td->latitude, td->longitude, home_lat, home_lon), getWidth(50), getHeight(80));
+		paintArrow((int)course_to(home_lat, home_lon, td->latitude, td->longitude), getWidth(50), getHeight(80));
 		#endif
 #endif
 
@@ -458,9 +458,10 @@ void draw_bat_status(float voltage, float current, int pos_x, int pos_y, float s
 	
 	sprintf(buffer, "%.2fV", voltage);
 	TextEnd(pos_x, pos_y, buffer, SansTypeface, scale);
-
+#ifdef DRAWCURRENT
 	sprintf(buffer, "%.2fA", current);
 	TextEnd(pos_x, pos_y + 30, buffer, SansTypeface, scale);
+#endif
 }
 
 void draw_sat(int sats, int fixtype, int pos_x, int pos_y, float scale){
