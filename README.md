@@ -1,4 +1,4 @@
-# wifibroadcast_osd
+# Wifibroadcast OSD
 OSD for HD wireless FPV system based on wifibroadcast from befi
 
 This project uses the openvg library to draw 2d objects onto the screen. It is an OSD that uses the telemetry of already existing systems like mavlink, frsky direct GPS and so on.
@@ -7,6 +7,10 @@ If some steps in setting up the osd is unclear visit the blog from befi and chec
 https://befinitiv.wordpress.com/2015/07/06/telemetry-osd-for-wifibroadcast/
 
 Most of the steps should be the same. **Requires latest wifibroadcast version**
+
+# Telemetry Protocols
+
+Currently supports Frsky D-Series Protocol and Light Telemetry (LTM). Mavlink and others might follow later.
 
 # Possible issues
 1) The AHI might indicate the opposite direction. This can be fixed by changing this part in render.c
