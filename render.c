@@ -41,21 +41,26 @@ float smooth_rssi[3];
 uint8_t pointer = 0; */
 void render(telemetry_data_t *td) {
 	Start(width, height);
+
 #ifdef ALT
 	if (home_set)
 		draw_altitude(td->altitude, getWidth(60), getHeight(50), DRAW_ALT_LADDER, 2);
 #endif
+
 #ifdef SPEED
 	if (home_set)
 		draw_speed((int)td->speed, getWidth(40), getHeight(50), DRAW_SPEED_LADDER, 2);
 #endif
+
 #ifdef HOME_ARROW
 	if (home_set)
-		paintArrow((int)course_to(td->latitude, td->longitude, home_lat, home_lon), getWidth(50), getHeight(80));
+		paintArrow((int)course_to((td->ns == 'N'? 1:-1) *td->latitude, (td->ns == 'E'? 1:-1) *td->longitude, home_lat, home_lon), getWidth(50), getHeight(80));
 #endif
+
 #ifdef HEADING
 	draw_compass(td->heading, getWidth(50), getHeight(89), DRAW_COURSE_LADDER, 1.5);
 #endif
+
 #ifdef RSSI
 	if(td->rx_status != NULL) {
 		int i;
@@ -75,14 +80,17 @@ void render(telemetry_data_t *td) {
 		draw_signal(best_dbm, 0/*(int)((smooth_rssi[0] + smooth_rssi[1] + smooth_rssi[2])/3.0f)*/, getWidth(20), getHeight(90), scale_factor*3);
 	}
 #endif
+
 #ifdef BATT_STATUS
 	draw_bat_status(td->voltage, 0.0f, getWidth(20), getHeight(5), scale_factor * 2.5);
 #endif
+
 #ifdef BATT_REMAINING
 	#if defined(FRSKY)
 	draw_bat_remaining(((td->voltage/CELLS)-CELL_MIN)/(CELL_MAX-CELL_MIN)*100, getWidth(10), getHeight(90), 3);
 	#endif
 #endif 
+
 #ifdef POSITION
 	#if defined(FRSKY)
 	//we assume that if we get the NS and EW values from frsky protocol, that we have a fix
@@ -105,43 +113,61 @@ void render(telemetry_data_t *td) {
 		}
 	}
 	#elif defined(MAVLINK)
+	
+	#elif defined(LTM)
+	if (td->fix && !home_set){
+		setting_home = true;
+	}
 
+	if (setting_home && !home_set){
+		if (++home_counter == 10){
+			home_set = true;
+			home_lat = td->latitude;
+			home_lon = td->longitude;
+			td->ns = 1;
+			td->ew = 1;
+		}
+	}
 	#endif
 #endif
+
 #ifdef DISTANCE
 	if (home_set)
-		draw_home_distance((int)distance_between(home_lat, home_lon, td->latitude, td->longitude), getWidth(50), getHeight(5), scale_factor * 2.5);
+		draw_home_distance((int)distance_between(home_lat, home_lon, (td->ns == 'N'? 1:-1) *td->latitude, (td->ns == 'E'? 1:-1) *td->longitude), getWidth(50), getHeight(5), scale_factor * 2.5);
 #endif
+
 #ifdef HORIZON
-	#if defined(FRSKY)
+#if defined(FRSKY)
 	float x_val, y_val, z_val;
     	x_val = td->x;
     	y_val = td->y;
     	z_val = td->z;
 
-	//draw_horizon(TO_DEG * (atan(x_val / sqrt((y_val*y_val) + (z_val*z_val)))), TO_DEG * (atan(y_val / sqrt((x_val*x_val)+(z_val*z_val)))), getWidth(50), getHeight(50),true, 1.5f);
-#ifdef EXCHANGE_ROLL_AND_PITCH
-#if DRAW_AHI_LADDER == true
+	#ifdef EXCHANGE_ROLL_AND_PITCH
+		#if DRAW_AHI_LADDER == true
 	draw_horizon(INVERT_ROLL * TO_DEG * (atan(y_val / sqrt((x_val*x_val) + (z_val*z_val)))), INVERT_PITCH * TO_DEG * (atan(x_val / sqrt((y_val*y_val)+(z_val*z_val)))), getWidth(50), getHeight(50), 1.5f);
-#else
+		#else
 	paintAHI(INVERT_ROLL * TO_DEG * (atan(y_val / sqrt((x_val*x_val) + (z_val*z_val)))), INVERT_PITCH * TO_DEG * (atan(x_val / sqrt((y_val*y_val)+(z_val*z_val)))));
-#endif
-#else
-#if DRAW_AHI_LADDER == true
-	//draw_horizon(10, 15, getWidth(50), getHeight(50), 1.5f);
+		#endif //AHI ladder
+	#else
+		#if DRAW_AHI_LADDER == true
 	draw_horizon((int)(INVERT_ROLL * TO_DEG * (atan(y_val / sqrt((x_val*x_val) + (z_val*z_val))))), (int)( INVERT_PITCH * TO_DEG * (atan(x_val / sqrt((y_val*y_val)+(z_val*z_val))))), getWidth(50), getHeight(50), 1.5f);
-#else
+		#else
 	paintAHI(INVERT_ROLL * TO_DEG * (atan(x_val / sqrt((y_val*y_val) + (z_val*z_val)))), INVERT_PITCH * TO_DEG * (atan(y_val / sqrt((x_val*x_val)+(z_val*z_val)))));
-#endif
-#endif
+		#endif // AHI ladder
+	#endif // EXCHANGE_ROLL_AND_PITCH
 
 	
-	#elif defined(MAVLINK)
+#elif defined(MAVLINK)
 
-	#elif defined(LTM)
-
-	#endif
-#endif
+#elif defined(LTM)
+	#if DRAW_AHI_LADDER == true
+	draw_horizon(td->roll, td->pitch, getWidth(50), getHeight(50), 1.5f);
+	#else
+	paintAHI(td->roll, td->pitch);
+	#endif //AHI ladder
+#endif //protocol
+#endif //HORIZON
 	End();
 }
 
