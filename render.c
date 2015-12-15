@@ -90,9 +90,7 @@ void render(telemetry_data_t *td) {
 #endif
 
 #ifdef BATT_REMAINING
-	#if defined(FRSKY)
 	draw_bat_remaining(((td->voltage/CELLS)-CELL_MIN)/(CELL_MAX-CELL_MIN)*100, getWidth(10), getHeight(90), 3);
-	#endif
 #endif 
 
 #ifdef POSITION
