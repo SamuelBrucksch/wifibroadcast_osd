@@ -19,7 +19,7 @@
 
 /** HOME ARROW **/
 //uncomment if home arrow is pointing in the wrong direction
-//#define INVERT_HOME_ARROW
+#define INVERT_HOME_ARROW
 
 /** UNITS**/
 //uncomment if you want to use imperial units
@@ -28,10 +28,10 @@
 /** DETAILS **/
 //set to true if you want to show the ladders
 //on raspi 1 it is not recommended to use the ladders as it might reduce performance and cause artefacts in the video due too much load
-#define DRAW_ALT_LADDER false
-#define DRAW_SPEED_LADDER false
-#define DRAW_COURSE_LADDER false
-#define DRAW_AHI_LADDER false
+#define DRAW_ALT_LADDER true
+#define DRAW_SPEED_LADDER true
+#define DRAW_COURSE_LADDER true
+#define DRAW_AHI_LADDER true
 
 /** OSD ELEMENTS **/
 //comment to disable feature

@@ -113,11 +113,11 @@ void ltm_check(telemetry_data_t *td) {
   LTMreadIndex = 0;
                     
   if (LTMcmd==LIGHTTELEMETRY_GFRAME)  {
-    td->latitude = (double)((int32_t)ltmread_u32());
-    td->longitude = (double)((int32_t)ltmread_u32());
+    td->latitude = (double)((int32_t)ltmread_u32())/10000000;
+    td->longitude = (double)((int32_t)ltmread_u32())/10000000;
     uint8_t uav_groundspeedms = ltmread_u8();
     td->speed = (float)(uav_groundspeedms * 3.6f); // convert to kmh
-    td->altitude = (float)((int32_t)ltmread_u32());
+    td->altitude = (float)((int32_t)ltmread_u32())/100.0f;
     uint8_t ltm_satsfix = ltmread_u8();
     td->sats = (ltm_satsfix >> 2) & 0xFF;
     td->fix = ltm_satsfix & 0b00000011;
@@ -129,8 +129,8 @@ void ltm_check(telemetry_data_t *td) {
     if (td->heading < 0 ) td->heading = td->heading + 360; //convert from -180/180 to 0/360°
     //memset(LTMserialBuffer, 0, LIGHTTELEMETRY_AFRAMELENGTH-4); 
   }else if (LTMcmd==LIGHTTELEMETRY_SFRAME)  {
-    td->voltage = (float)ltmread_u16();
-    td->ampere = (float)ltmread_u16();
+    td->voltage = (float)ltmread_u16()/1000.0f;
+    td->ampere = (float)ltmread_u16()/1000.0f;
     td->rssi = ltmread_u8();
     td->airspeed = ltmread_u8();
     uint8_t ltm_armfsmode = ltmread_u8();

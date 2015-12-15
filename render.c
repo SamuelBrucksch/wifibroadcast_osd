@@ -54,7 +54,11 @@ void render(telemetry_data_t *td) {
 
 #ifdef HOME_ARROW
 	if (home_set)
+		#ifdef FRSKY
 		paintArrow((int)course_to((td->ns == 'N'? 1:-1) *td->latitude, (td->ns == 'E'? 1:-1) *td->longitude, home_lat, home_lon), getWidth(50), getHeight(80));
+		#elif defined(LTM)
+		 paintArrow((int)course_to(td->latitude, td->longitude, home_lat, home_lon), getWidth(50), getHeight(80));
+		#endif
 #endif
 
 #ifdef HEADING
@@ -96,12 +100,12 @@ void render(telemetry_data_t *td) {
 	//we assume that if we get the NS and EW values from frsky protocol, that we have a fix
 	if ((td->ew == 'E' || td->ew == 'W') && (td->ns == 'N' || td->ns == 'S')){
 		setting_home = true;
-		draw_position((td->ns == 'N'? 1:-1) * td->latitude, (td->ew == 'E'? 1:-1) * td->longitude, true, getWidth(85), getHeight(5), scale_factor*2.5);
+		draw_position((td->ns == 'N'? 1:-1) * td->latitude, (td->ew == 'E'? 1:-1) * td->longitude, true, 0, getWidth(85), getHeight(5), scale_factor*2.5);
 	}else{
 		//no fix
 		setting_home = false;
 		home_counter = 0;
-		draw_position((td->ns == 'N'? 1:-1) * td->latitude, (td->ew == 'E'? 1:-1) * td->longitude, false, getWidth(85), getHeight(5), scale_factor*2.5);
+		draw_position((td->ns == 'N'? 1:-1) * td->latitude, (td->ew == 'E'? 1:-1) * td->longitude, false, 0, getWidth(85), getHeight(5), scale_factor*2.5);
 	}
 	
 	//if 10 packages after each other have a fix automatically set home
@@ -115,7 +119,7 @@ void render(telemetry_data_t *td) {
 	#elif defined(MAVLINK)
 	
 	#elif defined(LTM)
-	if (td->fix && !home_set){
+	if (td->fix > 2 && !home_set){
 		setting_home = true;
 	}
 
@@ -128,12 +132,17 @@ void render(telemetry_data_t *td) {
 			td->ew = 1;
 		}
 	}
+	draw_position(td->latitude, td->longitude, td->fix, td->sats, getWidth(85), getHeight(5), scale_factor*2.5);
 	#endif
 #endif
 
 #ifdef DISTANCE
 	if (home_set)
+		#ifdef FRSKY
 		draw_home_distance((int)distance_between(home_lat, home_lon, (td->ns == 'N'? 1:-1) *td->latitude, (td->ns == 'E'? 1:-1) *td->longitude), getWidth(50), getHeight(5), scale_factor * 2.5);
+		#elif defined(LTM)
+                draw_home_distance((int)distance_between(home_lat, home_lon, td->latitude, td->longitude), getWidth(50), getHeight(5), scale_factor * 2.5);
+		#endif
 #endif
 
 #ifdef HORIZON
@@ -461,7 +470,7 @@ void draw_sat(int sats, int fixtype, int pos_x, int pos_y, float scale){
 	//TextEnd(pos_x, pos_y, buffer, SansTypeface, scale_factor * scale);
 }
 
-void draw_position(float lat, float lon, bool fix, int pos_x, int pos_y, float scale){
+void draw_position(float lat, float lon, bool fix, int sats, int pos_x, int pos_y, float scale){
 	Fill(0xff,0xff,0xff,1);
 	Stroke(0,0,0,1);
 	StrokeWidth(1);
@@ -473,6 +482,11 @@ void draw_position(float lat, float lon, bool fix, int pos_x, int pos_y, float s
 	if (!fix){
 		sprintf(buffer, "No valid fix!");
 		TextEnd(pos_x, pos_y + 60, buffer, SansTypeface, scale*.75f);
+	}else if (sats > 0){
+		#ifdef LTM
+		sprintf(buffer, "Sats: %d", sats);
+		TextEnd(pos_x, pos_y + 60, buffer, SansTypeface, scale*.75f); 
+		#endif
 	}
 	
 }
