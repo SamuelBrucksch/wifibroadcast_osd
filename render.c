@@ -169,9 +169,9 @@ void render(telemetry_data_t *td) {
 
 #elif defined(LTM)
 	#if DRAW_AHI_LADDER == true
-	draw_horizon(td->roll, td->pitch, getWidth(50), getHeight(50), 1.5f);
+	draw_horizon(INVERT_ROLL * td->roll, INVERT_PITCH * td->pitch, getWidth(50), getHeight(50), 1.5f);
 	#else
-	paintAHI(td->roll, td->pitch);
+	paintAHI(INVERT_ROLL * td->roll, INVERT_PITCH * td->pitch);
 	#endif //AHI ladder
 #endif //protocol
 #endif //HORIZON
