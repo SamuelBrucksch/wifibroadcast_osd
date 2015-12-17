@@ -43,13 +43,23 @@ void render(telemetry_data_t *td) {
 	Start(width, height);
 
 #ifdef ALT
-	if (home_set)
-		draw_altitude(td->altitude, getWidth(60), getHeight(50), DRAW_ALT_LADDER, 2);
+	if (home_set){
+		#ifdef IMPERIAL
+		draw_altitude((int)(td->altitude * TO_FEET), getWidth(60), getHeight(50), DRAW_ALT_LADDER, 2);
+		#else
+		draw_altitude((int)td->altitude, getWidth(60), getHeight(50), DRAW_ALT_LADDER, 2);
+		#endif
+	}
 #endif
 
 #ifdef SPEED
-	if (home_set)
+	if (home_set){
+		#ifdef IMPERIAL
+		draw_speed((int)(td->speed*TO_MPH), getWidth(40), getHeight(50), DRAW_SPEED_LADDER, 2);
+		#else
 		draw_speed((int)td->speed, getWidth(40), getHeight(50), DRAW_SPEED_LADDER, 2);
+		#endif
+	}
 #endif
 
 #ifdef HOME_ARROW
@@ -576,10 +586,6 @@ void draw_altitude(int alt, int pos_x, int pos_y, bool ladder_enabled, float sca
 	Stroke(0,0,0,1);
 	StrokeWidth(1);
 
-#ifdef IMPERIAL
-	alt = (int)(alt * TO_FEET);
-#endif
-
 	sprintf(buffer, "%d", alt);
 	TextMid(pos_x_r + s_width / 2 + s_width / 5, pos_y - scale_factor * scale*1.5 / 2, buffer, SansTypeface, scale_factor * scale*1.5);
 
@@ -673,9 +679,7 @@ void draw_speed(int speed, int pos_x, int pos_y, bool ladder_enabled, float scal
 	Fill(0xff,0xff,0xff,1);
 	Stroke(0,0,0,1);
 	StrokeWidth(1);
-#ifdef IMPERIAL
-	speed = speed*TO_MPH;
-#endif
+
 	sprintf(buffer, "%d", speed);
 	TextMid(pos_x_l - s_width / 2 - s_width / 5, pos_y - scale_factor * scale*1.5 / 2, buffer, SansTypeface, scale_factor * scale*1.5);
 	
