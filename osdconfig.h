@@ -51,7 +51,7 @@
  * GPS -> direct NMEA input
  * LTM -> Light Telemetry
  *
- * Only frsky is currently working
+ * Only frsky and LTM is currently working
  */
 //#define FRSKY
 #define LTM
