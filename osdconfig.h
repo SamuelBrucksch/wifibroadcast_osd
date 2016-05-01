@@ -2,11 +2,11 @@
 //TODO automatically calculate cells based on voltage
 #define CELLS 3
 #define CELL_MAX 4.20
-#define CELL_MIN 3.30
+#define CELL_MIN 3.20
 //warning level 1 -> orange
-#define CELL_WARNING1 3.80
+#define CELL_WARNING1 3.50
 //warning level 2 -> red, critical
-#define CELL_WARNING2 3.60
+#define CELL_WARNING2 3.40
 
 /** ARTIFICIAL HORIZON **/
 //set to 1 or -1
@@ -25,15 +25,15 @@
 
 /** DETAILS **/
 //set to true if you want to show the ladders
-//on raspi 1 it is not recommended to use the ladders as it might reduce performance and cause artefacts in the video due too much load
-#define DRAW_ALT_LADDER false
-#define DRAW_SPEED_LADDER false
+//on raspi 1 it is not recommended to use the ladders as it might reduce performance and cause artefacts in the video due to too much load
+#define DRAW_ALT_LADDER true
+#define DRAW_SPEED_LADDER true
 #define DRAW_COURSE_LADDER true
 #define DRAW_AHI_LADDER true
 
 /** OSD ELEMENTS **/
 //comment to disable feature
-#define RSSI
+//#define RSSI
 #define HEADING
 #define HOME_ARROW
 #define BATT_REMAINING
@@ -43,7 +43,7 @@
 #define POSITION
 #define HORIZON
 #define DISTANCE
-//#define DRAW_CURRENT
+#define DRAW_CURRENT
 
 /** PROTOCOL **/
 /* FRSKY -> Frsky protocoll
@@ -54,7 +54,8 @@
  * Only frsky and LTM is currently working
  */
 //#define FRSKY
-#define LTM
+//#define LTM
+#define MAVLINK
 
 /** RSSI **/
 //packet based rssi, uncomment to disable

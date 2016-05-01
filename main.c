@@ -28,7 +28,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-//#define DEBUG
+#define DEBUG
 #include "osdconfig.h"
 #include <stdio.h>
 #include <stdint.h>
@@ -41,6 +41,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frsky.h"
 #elif defined(LTM)
 #include "ltm.h"
+#elif defined(MAVLINK)
+#include "mavlink.h"
 #endif
 #include "render.h"
 #include <sys/types.h>
@@ -60,7 +62,7 @@ fd_set set;
 struct timeval timeout;
 
 int main(int argc, char *argv[]) {
-	uint8_t buf[256];
+	uint8_t buf[1024];
 	size_t n;
 #ifdef FRSKY
 	frsky_state_t fs;
@@ -75,6 +77,7 @@ int main(int argc, char *argv[]) {
 		FD_ZERO(&set);
 		FD_SET(STDIN_FILENO, &set);
 		timeout.tv_sec = 0;
+		//read 100ms
 		timeout.tv_usec = 100*1000;
 		n = select(STDIN_FILENO + 1, &set, NULL, NULL, &timeout);
 		//printf("%d\n",n);
@@ -93,9 +96,11 @@ int main(int argc, char *argv[]) {
 			frsky_parse_buffer(&fs, &td, buf, n);
 #elif defined(LTM)
 			ltm_read(&td, buf, n);
+#elif defined(MAVLINK)
+			mavlink_read(&td, buf, n);
 #endif
 		}
-		
+
 	#ifdef DEBUG
 		prev_time = current_timestamp();
 		render(&td);
